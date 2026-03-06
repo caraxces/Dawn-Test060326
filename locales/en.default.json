@@ -116,6 +116,11 @@
   "products": {
     "product": {
       "add_to_cart": "Add to cart",
+      "add_to_favorites": "Add to favorites",
+      "remove_from_favorites": "Remove from favorites",
+      "favorites_saved_to_device": "Favorites are saved on this device.",
+      "view_favorites": "View your favorites",
+      "favorites_login_prompt_html": "<a href=\"{{ link }}\">Log in</a> to always see your favorites on all devices.",
       "choose_options": "Choose options",
       "choose_product_options": "Choose options for {{ product_name }}",
       "description": "Description",
@@ -293,6 +298,8 @@
     },
     "cart": {
       "title": "Your cart",
+      "free_shipping_message": "If you spend {{ amount }}, then shipping is free",
+      "continue_shopping": "or Continue Shopping",
       "caption": "Cart items",
       "remove_title": "Remove {{ title }}",
       "estimated_total": "Estimated total",
@@ -399,6 +406,11 @@
       "details": "Account details",
       "view_addresses": "View addresses",
       "return": "Return to Account details"
+    },
+    "favorites": {
+      "title": "Your favorites",
+      "empty": "You have no favorites yet. Add products from the store to see them here.",
+      "login_prompt_html": " <a href=\"{{ link }}\">Log in</a> to always see your favorites on all devices."
     },
     "account_fallback": "Account",
     "activate_account": {
@@ -551,6 +563,8 @@
     "message_placeholder": "Type your message here",
     "wrapped_label": "Gift wrapped",
     "edit_label": "Edit",
-    "edit_aria_label": "Edit gift wrap options for {{ product }}"
+    "edit_aria_label": "Edit gift wrap options for {{ product }}",
+    "update_label": "Update",
+    "cancel_label": "Cancel"
   }
 }

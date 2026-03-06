@@ -1,15 +1,8 @@
 {% comment %}
-  cart-giftwrap-line
+  cart-giftwrap-line (Figma: Cart drawer gift block + inline edit form)
 
-  Renders the gift-wrap summary row beneath a cart line item when the
-  shopper has opted in to gift wrapping. Intended for use inside the
-  cart drawer / slide-over, next to the product card for that line.
-
-  Accepts:
-  - cart_item: {Object} - A single cart line item object (required)
-
-  Usage:
-  {% render 'cart-giftwrap-line', cart_item: item %}
+  Renders gift-wrap summary and, when Edit is clicked, an inline form (To, From, Gift message + Update).
+  Accepts: cart_item (required)
 {% endcomment %}
 
 {%- liquid
@@ -25,61 +18,177 @@
       assign is_giftwrapped = true
     endif
   endfor
+  assign giftwrap_display_price = 1500 | money_without_trailing_zeros
+
+  assign to_val = ''
+  assign from_val = ''
+  assign msg_val = ''
+  for property in cart_item.properties
+    case property.first
+      when to_property
+        assign to_val = property.last
+      when from_property
+        assign from_val = property.last
+      when message_property
+        assign msg_val = property.last
+    endcase
+  endfor
+  assign line_index = cart_item.index | plus: 1
 -%}
 
 {%- if is_giftwrapped -%}
-  <div class="cart-giftwrap-line tw-w-full tw-bg-neutral-50 tw-rounded tw-flex tw-flex-col tw-gap-2 tw-p-3">
-
-    {%- comment -%} ── Header row: badge + edit link ── {%- endcomment -%}
-    <div class="tw-flex tw-items-center tw-justify-between tw-gap-2">
-
-      {%- comment -%} Confirmed badge {%- endcomment -%}
-      <div class="tw-flex tw-items-center tw-gap-2">
-        <span class="tw-flex-none tw-w-5 tw-h-5 tw-bg-neutral-900 tw-rounded tw-flex tw-items-center tw-justify-center" aria-hidden="true">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 8" fill="none" class="tw-w-2.5 tw-h-2">
-            <path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </span>
-        <span class="tw-text-xs tw-text-neutral-900">
-          {{ 'giftwrap.wrapped_label' | t }}
-        </span>
-      </div>
-
-      {%- comment -%} Edit link → goes back to the PDP in collection context ── {%- endcomment -%}
-      <a
-        href="{{ cart_item.product.url | within: cart_item.product.collections.first }}"
-        class="tw-inline-flex tw-items-center tw-gap-1 tw-text-xs tw-text-neutral-900 tw-border-b tw-border-neutral-900"
-        aria-label="{{ 'giftwrap.edit_aria_label' | t: product: cart_item.product.title }}"
-      >
-        {{ 'giftwrap.edit_label' | t }}
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" fill="none" class="tw-w-3 tw-h-3" aria-hidden="true">
-          <path d="M8.5 1.5l2 2-6.5 6.5H2v-2l6.5-6.5z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </a>
-
-    </div>
-
-    {%- comment -%} ── Gift message summary ── {%- endcomment -%}
+  <div
+    class="cart-giftwrap-line"
+    data-giftwrap-line
+    data-line-index="{{ line_index }}"
+    data-quantity="{{ cart_item.quantity }}"
+    data-key-gift="{{ gift_property_key | escape }}"
+    data-key-yes="{{ gift_property_yes | escape }}"
+    data-key-to="{{ to_property | escape }}"
+    data-key-from="{{ from_property | escape }}"
+    data-key-message="{{ message_property | escape }}"
+  >
+    {%- comment -%} Hidden: current properties for this line (to merge on update) {%- endcomment -%}
     {%- for property in cart_item.properties -%}
-      {%- case property.first -%}
-        {%- when to_property -%}
-          <p class="tw-text-xs tw-text-neutral-500">
-            <span class="tw-text-neutral-900">{{ 'giftwrap.to_label' | t }}:</span>
-            {{ property.last | escape }}
-          </p>
-        {%- when from_property -%}
-          <p class="tw-text-xs tw-text-neutral-500">
-            <span class="tw-text-neutral-900">{{ 'giftwrap.from_label' | t }}:</span>
-            {{ property.last | escape }}
-          </p>
-        {%- when message_property -%}
-          {%- if property.last != blank -%}
-            <p class="tw-text-xs tw-text-neutral-500 tw-italic">
-              &ldquo;{{ property.last | escape }}&rdquo;
-            </p>
-          {%- endif -%}
-      {%- endcase -%}
+      <input type="hidden" class="cart-giftwrap-line__prop" data-prop-key="{{ property.first | escape }}" data-prop-value="{{ property.last | escape }}">
     {%- endfor -%}
 
+    <div class="cart-giftwrap-line__row cart-giftwrap-line__row--top">
+      <div class="cart-giftwrap-line__label-wrap">
+        <span class="cart-giftwrap-line__checkbox" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none" width="20" height="20" aria-hidden="true">
+            <rect width="20" height="20" rx="4" fill="currentColor"/>
+            <path d="M4 10l4 4 8-8" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span class="cart-giftwrap-line__label">{{ 'giftwrap.add_label' | t: price: giftwrap_display_price }}</span>
+      </div>
+      <button type="button" class="cart-giftwrap-line__edit" data-giftwrap-edit aria-label="{{ 'giftwrap.edit_aria_label' | t: product: cart_item.product.title }}">
+        {{ 'giftwrap.edit_label' | t }}
+        <span class="cart-giftwrap-line__edit-icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" fill="none" width="12" height="12">
+            <path d="M8.5 1.5l2 2-6.5 6.5H2v-2l6.5-6.5z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+      </button>
+    </div>
+
+    <div class="cart-giftwrap-line__message" data-giftwrap-message>
+      {%- if to_val != blank or from_val != blank or msg_val != blank -%}
+        {%- if to_val != blank -%}{{ 'giftwrap.to_label' | t }}: {{ to_val | escape }}{%- endif -%}
+        {%- if from_val != blank -%}{% if to_val != blank %} / {% endif %}{{ 'giftwrap.from_label' | t }}: {{ from_val | escape }}{%- endif -%}
+        {%- if msg_val != blank -%}{% if to_val != blank or from_val != blank %} / {% endif %}&ldquo;{{ msg_val | escape }}&rdquo;{%- endif -%}
+      {%- endif -%}
+    </div>
+
+    <div class="cart-giftwrap-line__form" data-giftwrap-form aria-hidden="true">
+      <div class="cart-giftwrap-line__field">
+        <label class="cart-giftwrap-line__field-label" for="giftwrap-drawer-to-{{ line_index }}">{{ 'giftwrap.to_label' | t }}</label>
+        <input type="text" id="giftwrap-drawer-to-{{ line_index }}" class="cart-giftwrap-line__input" data-giftwrap-to placeholder="{{ 'giftwrap.to_placeholder' | t }}" value="{{ to_val | escape }}" autocomplete="off">
+      </div>
+      <div class="cart-giftwrap-line__field">
+        <label class="cart-giftwrap-line__field-label" for="giftwrap-drawer-from-{{ line_index }}">{{ 'giftwrap.from_label' | t }}</label>
+        <input type="text" id="giftwrap-drawer-from-{{ line_index }}" class="cart-giftwrap-line__input" data-giftwrap-from placeholder="{{ 'giftwrap.from_placeholder' | t }}" value="{{ from_val | escape }}" autocomplete="off">
+      </div>
+      <div class="cart-giftwrap-line__field">
+        <label class="cart-giftwrap-line__field-label" for="giftwrap-drawer-msg-{{ line_index }}">{{ 'giftwrap.message_label' | t }}</label>
+        <textarea id="giftwrap-drawer-msg-{{ line_index }}" class="cart-giftwrap-line__textarea" data-giftwrap-message-input rows="4" placeholder="{{ 'giftwrap.message_placeholder' | t }}" autocomplete="off">{{ msg_val | escape }}</textarea>
+      </div>
+      <div class="cart-giftwrap-line__form-actions">
+        <button type="button" class="button button--primary cart-giftwrap-line__update" data-giftwrap-update>{{ 'giftwrap.update_label' | t }}</button>
+        <button type="button" class="link link--text cart-giftwrap-line__cancel" data-giftwrap-cancel>{{ 'giftwrap.cancel_label' | t }}</button>
+      </div>
+    </div>
   </div>
+
+  <script>
+    (function() {
+      var block = document.querySelector('[data-giftwrap-line][data-line-index="{{ line_index }}"]');
+      if (!block) return;
+      var editBtn = block.querySelector('[data-giftwrap-edit]');
+      var messageEl = block.querySelector('[data-giftwrap-message]');
+      var formEl = block.querySelector('[data-giftwrap-form]');
+      var toInput = block.querySelector('[data-giftwrap-to]');
+      var fromInput = block.querySelector('[data-giftwrap-from]');
+      var msgInput = block.querySelector('[data-giftwrap-message-input]');
+      var updateBtn = block.querySelector('[data-giftwrap-update]');
+      var cancelBtn = block.querySelector('[data-giftwrap-cancel]');
+
+      function showForm() {
+        if (messageEl) messageEl.hidden = true;
+        if (formEl) { formEl.classList.add('cart-giftwrap-line__form--open'); formEl.setAttribute('aria-hidden', 'false'); toInput && toInput.focus(); }
+      }
+      function hideForm() {
+        if (formEl) { formEl.classList.remove('cart-giftwrap-line__form--open'); formEl.setAttribute('aria-hidden', 'true'); }
+        if (messageEl) messageEl.hidden = false;
+      }
+
+      if (editBtn) editBtn.addEventListener('click', showForm);
+      if (cancelBtn) cancelBtn.addEventListener('click', hideForm);
+
+      if (updateBtn && formEl) {
+        updateBtn.addEventListener('click', function() {
+          var line = parseInt(block.dataset.lineIndex, 10);
+          var qty = parseInt(block.dataset.quantity, 10);
+          var keyTo = block.dataset.keyTo;
+          var keyFrom = block.dataset.keyFrom;
+          var keyMessage = block.dataset.keyMessage;
+          var keyGift = block.dataset.keyGift;
+          var keyYes = block.dataset.keyYes;
+
+          var props = {};
+          block.querySelectorAll('.cart-giftwrap-line__prop').forEach(function(inp) {
+            props[inp.dataset.propKey] = inp.dataset.propValue || '';
+          });
+          props[keyGift] = keyYes;
+          if (keyTo) props[keyTo] = toInput ? toInput.value.trim() : '';
+          if (keyFrom) props[keyFrom] = fromInput ? fromInput.value.trim() : '';
+          if (keyMessage) props[keyMessage] = msgInput ? msgInput.value.trim() : '';
+
+          updateBtn.disabled = true;
+          var body = JSON.stringify({
+            line: line,
+            quantity: qty,
+            properties: props,
+            sections: 'cart-drawer',
+            sections_url: window.location.pathname
+          });
+          fetch((window.Shopify && window.Shopify.routes && window.Shopify.routes.cart_change_url) || '/cart/change.js', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            body: body
+          })
+            .then(function(r) { return r.text();           })
+            .then(function(text) {
+              hideForm();
+              var state = JSON.parse(text);
+              if (state.sections && state.sections['cart-drawer']) {
+                var html = new DOMParser().parseFromString(state.sections['cart-drawer'], 'text/html');
+                var newItems = html.querySelector('cart-drawer-items');
+                var newFooter = html.querySelector('.cart-drawer__footer');
+                if (newItems) {
+                  var current = document.querySelector('cart-drawer-items');
+                  if (current) current.replaceWith(newItems.cloneNode(true));
+                }
+                if (newFooter) {
+                  var currentFooter = document.querySelector('.drawer__footer .cart-drawer__footer');
+                  if (currentFooter) currentFooter.replaceWith(newFooter.cloneNode(true));
+                }
+              } else {
+                var cartUrl = (window.Shopify && window.Shopify.routes && window.Shopify.routes.cart_url) || '/cart';
+                fetch(cartUrl + '?section_id=cart-drawer').then(function(r) { return r.text(); }).then(function(htmlText) {
+                  var doc = new DOMParser().parseFromString(htmlText, 'text/html');
+                  var newItems = doc.querySelector('cart-drawer-items');
+                  var newFooter = doc.querySelector('.cart-drawer__footer');
+                  if (newItems) { var cur = document.querySelector('cart-drawer-items'); if (cur) cur.replaceWith(newItems); }
+                  if (newFooter) { var curF = document.querySelector('.drawer__footer .cart-drawer__footer'); if (curF) curF.replaceWith(newFooter); }
+                });
+              }
+            })
+            .catch(function() { hideForm(); })
+            .finally(function() { updateBtn.disabled = false; });
+        });
+      }
+    })();
+  </script>
 {%- endif -%}

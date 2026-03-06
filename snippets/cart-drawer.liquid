@@ -74,6 +74,19 @@
           </span>
         </button>
       </div>
+      {%- if cart != empty and cart.item_count > 0 -%}
+        {%- liquid
+          assign free_shipping_threshold = 5000
+          assign threshold_formatted = free_shipping_threshold | money_without_trailing_zeros
+          assign progress_percent = cart.total_price | times: 100 | divided_by: free_shipping_threshold | at_most: 100
+        -%}
+        <div class="cart-drawer__free-shipping" data-free-shipping-threshold="{{ free_shipping_threshold }}">
+          <p class="cart-drawer__free-shipping-text">{{ 'sections.cart.free_shipping_message' | t: amount: threshold_formatted }}</p>
+          <div class="cart-drawer__free-shipping-bar" role="presentation">
+            <div class="cart-drawer__free-shipping-bar-inner" style="width: {{ progress_percent }}%;"></div>
+          </div>
+        </div>
+      {%- endif -%}
       <cart-drawer-items
         {% if cart == empty %}
           class=" is-empty"
@@ -175,38 +188,33 @@
                             </div>
                           {%- endif -%}
 
-                          {%- if item.product.has_only_default_variant == false
-                            or item.properties.size != 0
-                            or item.selling_plan_allocation != null
+                          {%- liquid
+                            assign gift_key = 'giftwrap.property_key' | t
+                            assign gift_to_key = 'giftwrap.to_property' | t
+                            assign gift_from_key = 'giftwrap.from_property' | t
+                            assign gift_msg_key = 'giftwrap.message_property' | t
                           -%}
-                            <dl>
-                              {%- if item.product.has_only_default_variant == false -%}
-                                {%- for option in item.options_with_values -%}
-                                  <div class="product-option">
-                                    <dt>{{ option.name }}:</dt>
-                                    <dd>
-                                      {{ option.value -}}
-                                      {%- unless forloop.last %}, {% endunless %}
-                                    </dd>
-                                  </div>
-                                {%- endfor -%}
-                              {%- endif -%}
-
+                          {%- if item.product.has_only_default_variant == false -%}
+                            <p class="cart-item__variants product-option">
+                              {%- for option in item.options_with_values -%}
+                                {{ option.value -}}{%- unless forloop.last %}, {% endunless %}
+                              {%- endfor -%}
+                            </p>
+                          {%- endif -%}
+                          {%- if item.properties.size != 0 -%}
+                            <dl class="cart-item__properties">
                               {%- for property in item.properties -%}
                                 {%- assign property_first_char = property.first | slice: 0 -%}
-                                {%- if property.last != blank and property_first_char != '_' -%}
+                                {%- assign is_gift_prop = false -%}
+                                {%- if property.first == gift_key or property.first == gift_to_key or property.first == gift_from_key or property.first == gift_msg_key -%}
+                                  {%- assign is_gift_prop = true -%}
+                                {%- endif -%}
+                                {%- if property.last != blank and property_first_char != '_' and is_gift_prop == false -%}
                                   <div class="product-option">
                                     <dt>{{ property.first }}:</dt>
                                     <dd>
                                       {%- if property.last contains '/uploads/' -%}
-                                        <a
-                                          href="{{ property.last }}"
-                                          class="link"
-                                          target="_blank"
-                                          aria-describedby="a11y-new-window-message"
-                                        >
-                                          {{ property.last | split: '/' | last }}
-                                        </a>
+                                        <a href="{{ property.last }}" class="link" target="_blank" aria-describedby="a11y-new-window-message">{{ property.last | split: '/' | last }}</a>
                                       {%- else -%}
                                         {{ property.last }}
                                       {%- endif -%}
@@ -215,7 +223,8 @@
                                 {%- endif -%}
                               {%- endfor -%}
                             </dl>
-
+                          {%- endif -%}
+                          {%- if item.selling_plan_allocation != null -%}
                             <p class="product-option">{{ item.selling_plan_allocation.selling_plan.name }}</p>
                           {%- endif -%}
 
@@ -461,6 +470,24 @@
                           </quantity-popover>
                         </td>
                       </tr>
+                      {%- liquid
+                        assign gift_key = 'giftwrap.property_key' | t
+                        assign gift_yes = 'giftwrap.property_value_yes' | t
+                        assign item_has_gift = false
+                        for prop in item.properties
+                          if prop.first == gift_key and prop.last == gift_yes
+                            assign item_has_gift = true
+                            break
+                          endif
+                        endfor
+                      -%}
+                      {%- if item_has_gift -%}
+                        <tr class="cart-item__gift-row" role="row">
+                          <td class="cart-item__gift-cell" headers="CartDrawer-ColumnProductImage CartDrawer-ColumnProduct CartDrawer-ColumnTotal CartDrawer-ColumnQuantity" colspan="4" role="cell">
+                            {%- render 'cart-giftwrap-line', cart_item: item -%}
+                          </td>
+                        </tr>
+                      {%- endif -%}
                     {%- endfor -%}
                   </tbody>
                 </table>
@@ -574,6 +601,9 @@
           >
             {{ 'sections.cart.checkout' | t }}
           </button>
+          <a href="{{ routes.all_products_collection_url }}" class="cart-drawer__continue link link--text underlined-link">
+            {{ 'sections.cart.continue_shopping' | t }}
+          </a>
         </div>
       </div>
     </div>

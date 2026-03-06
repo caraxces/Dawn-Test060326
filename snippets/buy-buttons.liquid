@@ -69,42 +69,123 @@
         {%- endif -%}
 
         <div class="product-form__buttons">
-          {%- liquid
-            assign check_against_inventory = true
-            if product.selected_or_first_available_variant.inventory_management != 'shopify' or product.selected_or_first_available_variant.inventory_policy == 'continue'
-              assign check_against_inventory = false
-            endif
-            if product.selected_or_first_available_variant.quantity_rule.min > product.selected_or_first_available_variant.inventory_quantity and check_against_inventory
-              assign quantity_rule_soldout = true
-            endif
-          -%}
+          <div class="product-form__buttons-inner">
+            {%- liquid
+              assign check_against_inventory = true
+              if product.selected_or_first_available_variant.inventory_management != 'shopify' or product.selected_or_first_available_variant.inventory_policy == 'continue'
+                assign check_against_inventory = false
+              endif
+              if product.selected_or_first_available_variant.quantity_rule.min > product.selected_or_first_available_variant.inventory_quantity and check_against_inventory
+                assign quantity_rule_soldout = true
+              endif
+            -%}
+            <button
+              id="ProductSubmitButton-{{ section_id }}"
+              type="submit"
+              name="add"
+              class="product-form__submit button button--full-width {% if show_dynamic_checkout %}button--secondary{% else %}button--primary{% endif %}"
+              {% if product.selected_or_first_available_variant.available == false
+                or quantity_rule_soldout
+                or product.selected_or_first_available_variant == null
+              %}
+                disabled
+              {% endif %}
+            >
+              <span>
+                {%- if product.selected_or_first_available_variant == null -%}
+                  {{ 'products.product.unavailable' | t }}
+                {%- elsif product.selected_or_first_available_variant.available == false or quantity_rule_soldout -%}
+                  {{ 'products.product.sold_out' | t }}
+                {%- else -%}
+                  {{ 'products.product.add_to_cart' | t }}
+                {%- endif -%}
+              </span>
+              {%- render 'loading-spinner' -%}
+            </button>
+            {%- if show_dynamic_checkout -%}
+              {{ form | payment_button }}
+            {%- endif -%}
+          </div>
           <button
-            id="ProductSubmitButton-{{ section_id }}"
-            type="submit"
-            name="add"
-            class="product-form__submit button button--full-width {% if show_dynamic_checkout %}button--secondary{% else %}button--primary{% endif %}"
-            {% if product.selected_or_first_available_variant.available == false
-              or quantity_rule_soldout
-              or product.selected_or_first_available_variant == null
-            %}
-              disabled
-            {% endif %}
+            type="button"
+            class="product-form__favorite button button--tertiary"
+            data-product-favorite
+            data-product-id="{{ product.id }}"
+            data-product-handle="{{ product.handle | escape }}"
+            aria-label="{{ 'products.product.add_to_favorites' | t }}"
+            aria-pressed="false"
+            title="{{ 'products.product.add_to_favorites' | t }}"
           >
-            <span>
-              {%- if product.selected_or_first_available_variant == null -%}
-                {{ 'products.product.unavailable' | t }}
-              {%- elsif product.selected_or_first_available_variant.available == false or quantity_rule_soldout -%}
-                {{ 'products.product.sold_out' | t }}
-              {%- else -%}
-                {{ 'products.product.add_to_cart' | t }}
-              {%- endif -%}
+            <span class="product-form__favorite-icon" aria-hidden="true">
+              {{- 'icon-heart.svg' | inline_asset_content -}}
             </span>
-            {%- render 'loading-spinner' -%}
           </button>
-          {%- if show_dynamic_checkout -%}
-            {{ form | payment_button }}
-          {%- endif -%}
         </div>
+        {%- if customer -%}
+          <p class="product-form__favorite-note product-form__favorite-note--logged-in">
+            {{ 'products.product.favorites_saved_to_device' | t }}
+            <a href="{{ shop.url }}/pages/favorites">{{ 'products.product.view_favorites' | t }}</a>
+          </p>
+        {%- else -%}
+          <p class="product-form__favorite-note product-form__favorite-note--guest">
+            {{ 'products.product.favorites_login_prompt_html' | t: link: routes.account_login_url }}
+          </p>
+        {%- endif -%}
+        <script>
+          (function() {
+            var FAVORITES_KEY = 'dawn_favorites';
+            var SYNC_URL = '{{ "apps/favorites/sync" | prepend: "/" }}';
+            var CUSTOMER_ID = {{ customer.id | default: 0 }};
+            function getFavorites() {
+              try {
+                var raw = localStorage.getItem(FAVORITES_KEY);
+                var arr = raw ? JSON.parse(raw) : [];
+                if (!Array.isArray(arr)) return [];
+                return arr.map(function(o) {
+                  if (o && typeof o === 'object' && o.id) return { id: String(o.id), handle: (o.handle || '').trim() };
+                  return { id: String(o), handle: '' };
+                });
+              } catch (e) { return []; }
+            }
+            function setFavorites(items) {
+              try { localStorage.setItem(FAVORITES_KEY, JSON.stringify(items)); } catch (e) {}
+            }
+            function syncToAccount(items) {
+              if (!CUSTOMER_ID || !items || !items.length) return;
+              try {
+                fetch(SYNC_URL, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                  body: JSON.stringify({ customer_id: CUSTOMER_ID, items: items })
+                }).catch(function() {});
+              } catch (e) {}
+            }
+            function initFavorite(btn) {
+              if (!btn || !btn.dataset.productId) return;
+              var id = String(btn.dataset.productId);
+              var handle = (btn.dataset.productHandle || '').trim();
+              var favorites = getFavorites();
+              var entry = favorites.find(function(o) { return o.id === id; });
+              var isActive = !!entry;
+              btn.setAttribute('aria-pressed', isActive);
+              btn.classList.toggle('product-form__favorite--active', isActive);
+              btn.setAttribute('aria-label', isActive ? {{ 'products.product.remove_from_favorites' | t | json }} : {{ 'products.product.add_to_favorites' | t | json }});
+              btn.addEventListener('click', function() {
+                var list = getFavorites();
+                var idx = list.findIndex(function(o) { return o.id === id; });
+                if (idx === -1) list.push({ id: id, handle: handle }); else list.splice(idx, 1);
+                setFavorites(list);
+                if (CUSTOMER_ID) syncToAccount(list);
+                var active = list.some(function(o) { return o.id === id; });
+                btn.setAttribute('aria-pressed', active);
+                btn.classList.toggle('product-form__favorite--active', active);
+                btn.setAttribute('aria-label', active ? {{ 'products.product.remove_from_favorites' | t | json }} : {{ 'products.product.add_to_favorites' | t | json }});
+              });
+            }
+            var b = document.querySelector('[data-product-favorite][data-product-id="{{ product.id }}"]');
+            if (b) initFavorite(b);
+          })();
+        </script>
       {%- endform -%}
     </product-form>
   {%- else -%}

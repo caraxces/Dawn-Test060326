@@ -1,0 +1,99 @@
+{% comment %}
+  Account icon popup: favorites (from cache), Login, Create account, Cart (opens drawer).
+  Used in header when shop.customer_accounts_enabled.
+{% endcomment %}
+<div class="header__account-popup" id="HeaderAccountPopup" hidden>
+  <div class="header__account-popup__inner">
+    <div class="header__account-popup__favorites" data-account-favorites>
+      <p class="header__account-popup__favorites-title">{{ 'customer.favorites.title' | t }}</p>
+      <ul class="header__account-popup__favorites-list" data-favorites-list aria-label="{{ 'customer.favorites.title' | t }}"></ul>
+      <p class="header__account-popup__favorites-empty" data-favorites-empty>{{ 'customer.favorites.empty' | t }}</p>
+      <a href="{{ shop.url }}/pages/favorites" class="header__account-popup__link header__account-popup__view-favorites" data-view-favorites>{{ 'products.product.view_favorites' | t }}</a>
+    </div>
+    <div class="header__account-popup__actions">
+      {%- if customer -%}
+        <a href="{{ routes.account_url }}" class="header__account-popup__btn header__account-popup__btn--primary">{{ 'customer.account_fallback' | t }}</a>
+        <a href="{{ routes.account_logout_url }}" class="header__account-popup__link">{{ 'customer.log_out' | t }}</a>
+      {%- else -%}
+        <a href="{{ routes.account_login_url }}" class="header__account-popup__btn header__account-popup__btn--primary">{{ 'customer.log_in' | t }}</a>
+        <a href="{{ routes.account_register_url }}" class="header__account-popup__btn header__account-popup__btn--secondary">{{ 'customer.login_page.create_account' | t }}</a>
+      {%- endif -%}
+      <button type="button" class="header__account-popup__cart-btn" data-open-cart-drawer aria-label="{{ 'sections.cart.title' | t }}">
+        <span class="svg-wrapper">{{- 'icon-cart.svg' | inline_asset_content -}}</span>
+        {{ 'sections.cart.title' | t }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    var FAVORITES_KEY = 'dawn_favorites';
+    var popup = document.getElementById('HeaderAccountPopup');
+    var trigger = document.querySelector('[data-account-popup-trigger]');
+    var listEl = document.querySelector('[data-favorites-list]');
+    var emptyEl = document.querySelector('[data-favorites-empty]');
+    var viewFavoritesLink = document.querySelector('[data-view-favorites]');
+    var openCartBtn = document.querySelector('[data-open-cart-drawer]');
+
+    if (!trigger || !popup) return;
+
+    function getFavorites() {
+      try {
+        var raw = localStorage.getItem(FAVORITES_KEY);
+        var arr = raw ? JSON.parse(raw) : [];
+        return Array.isArray(arr) ? arr : [];
+      } catch (e) { return []; }
+    }
+
+    function renderFavorites() {
+      var items = getFavorites();
+      if (!listEl) return;
+      listEl.innerHTML = '';
+      if (emptyEl) emptyEl.hidden = items.length > 0;
+      if (viewFavoritesLink) viewFavoritesLink.style.display = items.length > 0 ? '' : 'none';
+      items.forEach(function(item) {
+        var handle = (item.handle || '').trim();
+        if (!handle) return;
+        var li = document.createElement('li');
+        var a = document.createElement('a');
+        a.href = (window.Shopify?.routes?.root || '/') + 'products/' + handle;
+        a.className = 'header__account-popup__link';
+        a.textContent = handle.replace(/-/g, ' ');
+        li.appendChild(a);
+        listEl.appendChild(li);
+      });
+    }
+
+    function openPopup() {
+      popup.hidden = false;
+      trigger.setAttribute('aria-expanded', 'true');
+      renderFavorites();
+      document.addEventListener('click', closeOnClickOutside);
+    }
+
+    function closePopup() {
+      popup.hidden = true;
+      trigger.setAttribute('aria-expanded', 'false');
+      document.removeEventListener('click', closeOnClickOutside);
+    }
+
+    function closeOnClickOutside(e) {
+      if (popup.contains(e.target) || trigger.contains(e.target)) return;
+      closePopup();
+    }
+
+    trigger.addEventListener('click', function(e) {
+      e.preventDefault();
+      if (popup.hidden) openPopup(); else closePopup();
+    });
+
+    if (openCartBtn) {
+      openCartBtn.addEventListener('click', function() {
+        closePopup();
+        var drawer = document.querySelector('cart-drawer');
+        if (drawer && typeof drawer.open === 'function') drawer.open(openCartBtn);
+      });
+    }
+  })();
+</script>
