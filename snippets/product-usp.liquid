@@ -8,6 +8,26 @@
   {% render 'product-usp', block: block %}
 {% endcomment %}
 
+{% comment %} Map icon settings to SVG files {% endcomment %}
+{%- assign icon_1_file = 'Heart copy.svg' -%}
+{%- case block.settings.icon_1 -%}
+  {%- when 'truck' -%}{%- assign icon_1_file = 'icon-truck.svg' -%}
+  {%- when 'star' -%}{%- assign icon_1_file = 'icon-star.svg' -%}
+  {%- when 'heart' -%}{%- assign icon_1_file = 'Heart copy.svg' -%}
+  {%- when 'box' -%}{%- assign icon_1_file = 'icon-box.svg' -%}
+  {%- when 'return' -%}{%- assign icon_1_file = 'icon-return.svg' -%}
+  {%- when 'check_mark' -%}{%- assign icon_1_file = 'icon-check-mark.svg' -%}
+{%- endcase -%}
+{%- assign icon_2_file = 'Gift copy.svg' -%}
+{%- case block.settings.icon_2 -%}
+  {%- when 'truck' -%}{%- assign icon_2_file = 'icon-truck.svg' -%}
+  {%- when 'star' -%}{%- assign icon_2_file = 'icon-star.svg' -%}
+  {%- when 'heart' -%}{%- assign icon_2_file = 'Heart copy.svg' -%}
+  {%- when 'box' -%}{%- assign icon_2_file = 'icon-box.svg' -%}
+  {%- when 'return' -%}{%- assign icon_2_file = 'icon-return.svg' -%}
+  {%- when 'check_mark' -%}{%- assign icon_2_file = 'icon-check-mark.svg' -%}
+{%- endcase -%}
+
 <div class="product-usp" {{ block.shopify_attributes }}>
   <div class="product-usp__grid">
     {%- if block.settings.title_1 != blank or block.settings.text_1 != blank -%}
@@ -24,9 +44,12 @@
               loading="lazy"
               width="24"
               height="24"
+              class="product-usp__icon-svg"
             >
+          {%- elsif block.settings.icon_1 != 'none' -%}
+            <img src="{{ icon_1_file | asset_url }}" width="24" height="24" alt="" role="presentation" loading="lazy" class="product-usp__icon-svg">
           {%- else -%}
-            <img src="{{ 'Heart.svg' | asset_url }}" width="24" height="24" alt="" role="presentation" loading="lazy" class="product-usp__icon-svg">
+            <img src="{{ 'Heart copy.svg' | asset_url }}" width="24" height="24" alt="" role="presentation" loading="lazy" class="product-usp__icon-svg">
           {%- endif -%}
         </div>
         {%- if block.settings.title_1 != blank -%}
@@ -52,9 +75,12 @@
               loading="lazy"
               width="24"
               height="24"
+              class="product-usp__icon-svg"
             >
+          {%- elsif block.settings.icon_2 != 'none' -%}
+            <img src="{{ icon_2_file | asset_url }}" width="24" height="24" alt="" role="presentation" loading="lazy" class="product-usp__icon-svg">
           {%- else -%}
-            <img src="{{ 'Gift.svg' | asset_url }}" width="24" height="24" alt="" role="presentation" loading="lazy" class="product-usp__icon-svg">
+            <img src="{{ 'Gift copy.svg' | asset_url }}" width="24" height="24" alt="" role="presentation" loading="lazy" class="product-usp__icon-svg">
           {%- endif -%}
         </div>
         {%- if block.settings.title_2 != blank -%}
