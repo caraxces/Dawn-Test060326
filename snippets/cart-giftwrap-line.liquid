@@ -1,0 +1,85 @@
+{% comment %}
+  cart-giftwrap-line
+
+  Renders the gift-wrap summary row beneath a cart line item when the
+  shopper has opted in to gift wrapping. Intended for use inside the
+  cart drawer / slide-over, next to the product card for that line.
+
+  Accepts:
+  - cart_item: {Object} - A single cart line item object (required)
+
+  Usage:
+  {% render 'cart-giftwrap-line', cart_item: item %}
+{% endcomment %}
+
+{%- liquid
+  assign gift_property_key  = 'giftwrap.property_key'  | t
+  assign gift_property_yes  = 'giftwrap.property_value_yes' | t
+  assign to_property        = 'giftwrap.to_property'    | t
+  assign from_property      = 'giftwrap.from_property'  | t
+  assign message_property   = 'giftwrap.message_property' | t
+
+  assign is_giftwrapped = false
+  for property in cart_item.properties
+    if property.first == gift_property_key and property.last == gift_property_yes
+      assign is_giftwrapped = true
+    endif
+  endfor
+-%}
+
+{%- if is_giftwrapped -%}
+  <div class="cart-giftwrap-line tw-w-full tw-bg-neutral-50 tw-rounded tw-flex tw-flex-col tw-gap-2 tw-p-3">
+
+    {%- comment -%} ── Header row: badge + edit link ── {%- endcomment -%}
+    <div class="tw-flex tw-items-center tw-justify-between tw-gap-2">
+
+      {%- comment -%} Confirmed badge {%- endcomment -%}
+      <div class="tw-flex tw-items-center tw-gap-2">
+        <span class="tw-flex-none tw-w-5 tw-h-5 tw-bg-neutral-900 tw-rounded tw-flex tw-items-center tw-justify-center" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 8" fill="none" class="tw-w-2.5 tw-h-2">
+            <path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span class="tw-text-xs tw-text-neutral-900">
+          {{ 'giftwrap.wrapped_label' | t }}
+        </span>
+      </div>
+
+      {%- comment -%} Edit link → goes back to the PDP in collection context ── {%- endcomment -%}
+      <a
+        href="{{ cart_item.product.url | within: cart_item.product.collections.first }}"
+        class="tw-inline-flex tw-items-center tw-gap-1 tw-text-xs tw-text-neutral-900 tw-border-b tw-border-neutral-900"
+        aria-label="{{ 'giftwrap.edit_aria_label' | t: product: cart_item.product.title }}"
+      >
+        {{ 'giftwrap.edit_label' | t }}
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" fill="none" class="tw-w-3 tw-h-3" aria-hidden="true">
+          <path d="M8.5 1.5l2 2-6.5 6.5H2v-2l6.5-6.5z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+
+    </div>
+
+    {%- comment -%} ── Gift message summary ── {%- endcomment -%}
+    {%- for property in cart_item.properties -%}
+      {%- case property.first -%}
+        {%- when to_property -%}
+          <p class="tw-text-xs tw-text-neutral-500">
+            <span class="tw-text-neutral-900">{{ 'giftwrap.to_label' | t }}:</span>
+            {{ property.last | escape }}
+          </p>
+        {%- when from_property -%}
+          <p class="tw-text-xs tw-text-neutral-500">
+            <span class="tw-text-neutral-900">{{ 'giftwrap.from_label' | t }}:</span>
+            {{ property.last | escape }}
+          </p>
+        {%- when message_property -%}
+          {%- if property.last != blank -%}
+            <p class="tw-text-xs tw-text-neutral-500 tw-italic">
+              &ldquo;{{ property.last | escape }}&rdquo;
+            </p>
+          {%- endif -%}
+      {%- endcase -%}
+    {%- endfor -%}
+
+  </div>
+{%- endif -%}

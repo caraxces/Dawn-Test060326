@@ -1,0 +1,176 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "shopify-best-practices",
+    "version": "1.0.0",
+    "description": "Best practices and conventions for Shopify Dawn-based theme development. See also: https://shopify.dev/docs/themes/best-practices",
+    "general": {
+        "dawn_updates": {
+            "rule": "We do not track Dawn updates. If a Dawn component updates we will not auto-replace ours. Adopt new Dawn functionality case-by-case only.",
+            "rationale": "Avoids backwards-compatibility burden and gives freedom to replace Dawn styles with Tailwind."
+        },
+        "core_inventory": {
+            "rule": "Always check the CORE inventory Notion doc before building a new component. If the component is listed, it is a candidate for backport to CORE.",
+            "link": "https://www.notion.so/a2c9df4c0286426cbf22bbd70782b89b",
+            "steps": [
+                "Check CORE inventory doc for a matching component.",
+                "If it exists in CORE already, use it instead of building from scratch.",
+                "If it does not exist in CORE, build it on the client site first, then create a CORE branch to backport."
+            ]
+        },
+        "build_tools": {
+            "css": "Use Tailwind's build tools for CSS.",
+            "js": "No build tools for JS — plain ES6 files."
+        }
+    },
+    "liquid": {
+        "feature_gating": {
+            "rule": "When adding a feature, decide if ALL clients will want it.",
+            "patterns": [
+                {
+                    "case": "Feature most clients will not want, but should be user-togglable",
+                    "approach": "Add a section/block setting to enable or disable the feature."
+                },
+                {
+                    "case": "Feature only developers should toggle",
+                    "approach": "Add a Liquid variable (e.g. {% assign enable_feature = false %}) at the top of the file."
+                }
+            ]
+        },
+        "component_reuse": {
+            "rule": "Check if a Dawn component already does most of what you need. Use it as a base before building from scratch."
+        },
+        "tailwind_ui": {
+            "rule": "If Dawn does not suffice or you want Tailwind, use Tailwind UI as a base for markup and styles."
+        },
+        "site_wide_settings": {
+            "rule": "Respect all site-wide Liquid variables and settings. Document any your component uses in CORE PR descriptions."
+        },
+        "client_specific_code": {
+            "rule": "Avoid hard-coding client-specific references. Flag any that exist when backporting to CORE."
+        },
+        "portability": {
+            "rule": "A section should be responsible for itself where possible. Think in components."
+        },
+        "markets_and_translations": {
+            "rules": [
+                "Use translation strings for all user-facing text (https://shopify.dev/docs/themes/architecture/locales/storefront-locale-files).",
+                "Use relative markets URLs (https://shopify.dev/docs/themes/markets/multiple-currencies-languages#locale-aware-urls).",
+                "Include collection URL in product URLs where possible."
+            ],
+            "example_product_url": "<a href=\"{{ product.url | within: collection }}\">",
+            "dawn_cull": "If a Dawn component has functionality very few clients will want, remove it."
+        },
+        "snippet_doc_comment": {
+            "rule": "Every snippet must have a comment at the top covering: (1) name + description, (2) accepted variables with types and (optional) marker, (3) example {% render %} call.",
+            "format": "{% comment %}\n  [Name]\n\n  Accepts:\n  - variable_name: {Type} - Description (Optional)\n\n  Usage:\n  {% render 'snippet-name', variable: value %}\n{% endcomment %}"
+        }
+    },
+    "css": {
+        "tailwind_abstraction": {
+            "rule": "Tailwind punishes bad abstraction. Never duplicate the same utility class list on multiple elements.",
+            "strategies": [
+                "Extract repeated elements into their own snippet so the class list only exists once.",
+                "If a snippet cannot be extracted, create a CSS class and use @apply to apply Tailwind utilities."
+            ]
+        },
+        "prefer_single_file": {
+            "rule": "Keep component styles inside the Liquid file using Tailwind classes. Avoid separate .css files unless absolutely necessary."
+        },
+        "no_arbitrary_values": {
+            "rule": "Avoid using Tailwind arbitrary values (e.g. tw-p-[1.2rem]). Use the closest default Tailwind scale value.",
+            "exception": "Confirm with the designer first — values that require [ ] are usually a design error."
+        },
+        "no_parent_arbitrary_selectors": {
+            "rule": "Do not apply arbitrary [ ] values on parent selectors (e.g. [&>*]:tw-mb-4). Apply classes directly to each child element instead.",
+            "bad_example": "<div class=\"[&>*]:tw-mb-4\">...</div>",
+            "good_example": "<h2 class=\"tw-mb-4\">...</h2>"
+        }
+    },
+    "js": {
+        "js_only_when_necessary": {
+            "rule": "Only use JS where absolutely necessary. Many interactions can be handled with HTML/CSS alone (e.g. <details>/<summary> for toggles)."
+        },
+        "single_purpose_files": {
+            "rule": "One JS file per Liquid file or per single conceptual task. Keep it small and focused."
+        },
+        "jsdoc_typing": {
+            "rule": "Use JSDoc type annotations instead of TypeScript for type safety.",
+            "example": "/**\n * @param {number} count\n */\nfunction logCount(count) { console.log(count); }"
+        },
+        "iife_for_global_code": {
+            "rule": "Wrap top-level JS (code not already inside a function or class) in an IIFE.",
+            "example": "(() => {\n  // global code here\n})();"
+        },
+        "inline_js_preference": {
+            "rule": "If a file is only used once per page, prefer keeping JS inside the Liquid file."
+        },
+        "early_returns": {
+            "rule": "Keep code flat. Use early returns instead of nested if statements."
+        },
+        "dry": {
+            "rule": "Abstract repeated logic into functions. Do not repeat yourself."
+        },
+        "readability": {
+            "rules": [
+                "Use for...of loops over reduce.",
+                "Prefer higher-order array methods (filter, map, find) over manual loops where readable.",
+                "Use includes() for both string and array membership checks. Do not use contains()."
+            ]
+        },
+        "es6": {
+            "rules": [
+                "Use const by default.",
+                "Only use let when the variable will be reassigned.",
+                "Never use var."
+            ]
+        },
+        "async_await": {
+            "rule": "Use async/await over .then() promise chains."
+        },
+        "arrow_functions": {
+            "rule": "Prefer arrow functions instead of binding this."
+        },
+        "variable_naming": {
+            "booleans": "isEnabled, hasChildren, containsString (yes/no phrasing)",
+            "arrays": "products, children, productCardEls (plural form)",
+            "dom_elements": "buttonEl, productCardEl (el suffix)"
+        },
+        "web_components": {
+            "rule": "Use the Web Components API where applicable. Use data attributes (dataset) for state.",
+            "lifecycle": {
+                "connectedCallback": "Bind all event listeners here.",
+                "disconnectedCallback": "Remove all event listeners here."
+            }
+        },
+        "dom_selection": {
+            "rule": "Use querySelector / querySelectorAll for DOM selection.",
+            "array_conversion": "const myEls = [...document.querySelectorAll('.my-class')];"
+        }
+    },
+    "workflow": {
+        "steps": [
+            "1. Check CORE inventory to see if the component already exists.",
+            "2. Build the component on the client site (see figma-to-liquid workflow).",
+            "3. Create a branch on the CORE repo with your component.",
+            "4. Remove all client-specific code from the CORE branch.",
+            "5. Confirm all data the component requires is present in CORE or your branch.",
+            "6. Create a PR into CORE main. PR description must include: theme URL, setting descriptions, variable descriptions.",
+            "7. Flag the PR for review on Slack.",
+            "8. Complete any change requests from reviewers.",
+            "9. Once approved, merge and close the feature branch."
+        ]
+    },
+    "resources": {
+        "tailwind": "https://tailwindcss.com/",
+        "tailwind_ui": "https://tailwindui.com/",
+        "dawn": "https://github.com/Shopify/dawn",
+        "core_inventory": "https://www.notion.so/a2c9df4c0286426cbf22bbd70782b89b",
+        "shopify_best_practices": "https://shopify.dev/docs/themes/best-practices",
+        "translation_strings": "https://shopify.dev/docs/themes/architecture/locales/storefront-locale-files",
+        "markets_urls": "https://shopify.dev/docs/themes/markets/multiple-currencies-languages#locale-aware-urls",
+        "web_components": "https://developer.mozilla.org/en-US/docs/Web/API/Web_components",
+        "jsdoc_typing": "https://dev.to/samuel-braun/boost-your-javascript-with-jsdoc-typing-3hb3",
+        "iife": "https://developer.mozilla.org/en-US/docs/Glossary/IIFE",
+        "early_return": "https://gomakethings.com/the-early-return-pattern-in-javascript/"
+    }
+}
