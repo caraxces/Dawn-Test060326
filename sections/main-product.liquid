@@ -676,6 +676,8 @@
                 </product-recommendations>
               {%- when 'icon-with-text' -%}
                 {% render 'icon-with-text', block: block %}
+              {%- when 'usp' -%}
+                {% render 'product-usp', block: block %}
             {%- endcase -%}
           {%- endfor -%}
           <a href="{{ product.url }}" class="link product__view-details animate-arrow">
@@ -1503,6 +1505,126 @@
           "id": "enable_quick_add",
           "label": "t:sections.main-product.blocks.complementary_products.settings.enable_quick_add.label",
           "default": false
+        }
+      ]
+    },
+    {
+      "type": "usp",
+      "name": "USP",
+      "settings": [
+        {
+          "type": "header",
+          "content": "USP item 1"
+        },
+        {
+          "type": "select",
+          "id": "icon_1",
+          "options": [
+            {
+              "value": "none",
+              "label": "None"
+            },
+            {
+              "value": "truck",
+              "label": "Truck"
+            },
+            {
+              "value": "star",
+              "label": "Star"
+            },
+            {
+              "value": "heart",
+              "label": "Heart"
+            },
+            {
+              "value": "box",
+              "label": "Box"
+            },
+            {
+              "value": "return",
+              "label": "Return"
+            },
+            {
+              "value": "check_mark",
+              "label": "Check mark"
+            }
+          ],
+          "default": "truck",
+          "label": "Icon"
+        },
+        {
+          "type": "image_picker",
+          "id": "image_1",
+          "label": "Custom icon image"
+        },
+        {
+          "type": "inline_richtext",
+          "id": "title_1",
+          "default": "International delivery",
+          "label": "Title"
+        },
+        {
+          "type": "inline_richtext",
+          "id": "text_1",
+          "default": "Get your order in 2 years",
+          "label": "Text"
+        },
+        {
+          "type": "header",
+          "content": "USP item 2"
+        },
+        {
+          "type": "select",
+          "id": "icon_2",
+          "options": [
+            {
+              "value": "none",
+              "label": "None"
+            },
+            {
+              "value": "truck",
+              "label": "Truck"
+            },
+            {
+              "value": "star",
+              "label": "Star"
+            },
+            {
+              "value": "heart",
+              "label": "Heart"
+            },
+            {
+              "value": "box",
+              "label": "Box"
+            },
+            {
+              "value": "return",
+              "label": "Return"
+            },
+            {
+              "value": "check_mark",
+              "label": "Check mark"
+            }
+          ],
+          "default": "star",
+          "label": "Icon"
+        },
+        {
+          "type": "image_picker",
+          "id": "image_2",
+          "label": "Custom icon image"
+        },
+        {
+          "type": "inline_richtext",
+          "id": "title_2",
+          "default": "Loyalty rewards",
+          "label": "Title"
+        },
+        {
+          "type": "inline_richtext",
+          "id": "text_2",
+          "default": "Don't look at other tees",
+          "label": "Text"
         }
       ]
     },

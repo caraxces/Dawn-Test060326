@@ -76,8 +76,20 @@
             "share_label": "Share"
           }
         },
+        "usp_9tXf3K": {
+          "type": "usp",
+          "settings": {
+            "icon_1": "truck",
+            "title_1": "International delivery",
+            "text_1": "Get your order in 2 years",
+            "icon_2": "star",
+            "title_2": "Loyalty rewards",
+            "text_2": "Don't look at other tees"
+          }
+        },
         "icon_with_text_jXmcHp": {
           "type": "icon-with-text",
+          "disabled": true,
           "settings": {
             "layout": "horizontal",
             "icon_1": "heart",
@@ -100,7 +112,7 @@
         "collapsible_tab_R73qH7",
         "collapsible_tab_8wnt4J",
         "share",
-        "icon_with_text_jXmcHp"
+        "usp_9tXf3K"
       ],
       "settings": {
         "enable_sticky_info": true,

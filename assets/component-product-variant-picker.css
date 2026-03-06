@@ -1,5 +1,9 @@
 variant-selects {
   display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .product--no-media .product-form__input--pill,
@@ -41,6 +45,8 @@ variant-selects {
 .product-form__input--dropdown {
   --swatch-input--size: 2rem;
   margin-bottom: 1.6rem;
+  width: 100%;
+  min-width: 0;
 }
 
 .product-form__input--dropdown .dropdown-swatch + select {
@@ -62,6 +68,8 @@ variant-selects {
   grid-template-columns: repeat(6, 1fr);
   gap: 0.6rem 0.8rem;
   align-items: start;
+  width: 100%;
+  min-width: 0;
 }
 
 /* Header row: legend (Size) left, See sizing chart right */
@@ -72,6 +80,8 @@ variant-selects {
   align-items: center;
   margin-bottom: 0.6rem;
   gap: 1rem;
+  width: 100%;
+  min-width: 0;
 }
 
 .product-form__option-header .form__label {
@@ -87,10 +97,12 @@ variant-selects {
   padding: 0;
   white-space: nowrap;
   color: #5900FF;
+  text-decoration: none;
 }
 
 .product-form__option-header .product-form__sizing-chart-btn:hover {
   color: #4a00e0;
+  text-decoration: none;
 }
 
 /* Dropdown: same header layout */
@@ -106,10 +118,12 @@ variant-selects {
 
 .sizing-chart-opener--standalone .product-form__sizing-chart-btn {
   color: #5900FF;
+  text-decoration: none;
 }
 
 .sizing-chart-opener--standalone .product-form__sizing-chart-btn:hover {
   color: #4a00e0;
+  text-decoration: none;
 }
 
 .product-form__input--pill .product-form__option-value {
@@ -209,6 +223,8 @@ variant-selects {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  width: 100%;
+  min-width: 0;
 }
 
 .product-form__input--swatch .product-form__option-header {

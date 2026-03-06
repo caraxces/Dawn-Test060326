@@ -184,6 +184,15 @@ product-info {
 
 .product-form {
   display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.product-form .form {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .product-form__error-message-wrapper:not([hidden]) {
@@ -203,14 +212,16 @@ product-info {
   margin-top: 0.25rem;
 }
 
-/* Form Elements */
+/* Form Elements — full width within product info area */
 .product-form__input {
   flex: 0 0 100%;
+  width: 100%;
+  max-width: 100%;
   padding: 0;
   margin: 0 0 1.2rem 0;
-  max-width: 44rem;
-  min-width: fit-content;
+  min-width: 0;
   border: none;
+  box-sizing: border-box;
 }
 
 .product-form__input .form__label {
@@ -399,10 +410,12 @@ a.product__text {
   margin-bottom: 1.2rem;
 }
 
-/* Gift wrap option (Wrap as a gift?) — above Add to cart, matches Figma spacing */
+/* Gift wrap option (Wrap as a gift?) — above Add to cart, full width */
 .product-form__gift-wrap-wrapper {
   margin-bottom: 1.2rem;
-  max-width: 44rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* Gift wrap add-on — Figma-aligned (no chevron, clean checkbox + form) */
@@ -423,6 +436,8 @@ a.product__text {
   justify-content: space-between;
   gap: var(--giftwrap-gap-row);
   flex-wrap: wrap;
+  width: 100%;
+  min-width: 0;
 }
 
 .giftwrap-add-on__label {
@@ -594,7 +609,9 @@ a.product__text {
   display: flex;
   align-items: flex-start;
   gap: 1rem;
-  max-width: 44rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .product-form__buttons-inner {
@@ -1418,6 +1435,11 @@ a.product__text {
   }
 }
 
+/* Thumbnail slider: no prev/next buttons on any breakpoint — user scrolls horizontally */
+.thumbnail-slider .slider-button {
+  display: none;
+}
+
 @media screen and (max-width: 749px) {
   .product__media-item {
     display: flex;
@@ -1446,7 +1468,8 @@ a.product__text {
 }
 
 @media screen and (min-width: 750px) {
-  .product--thumbnail_slider .thumbnail-slider {
+  .product--thumbnail_slider .thumbnail-slider,
+  .product--thumbnail .thumbnail-slider {
     display: flex;
     align-items: center;
   }
@@ -1455,7 +1478,14 @@ a.product__text {
     display: flex;
     padding: 0.5rem;
     flex: 1;
+    flex-wrap: nowrap;
     scroll-padding-left: 0.5rem;
+    min-width: 0;
+    cursor: grab;
+  }
+
+  .thumbnail-slider .thumbnail-list.slider--tablet-up:active {
+    cursor: grabbing;
   }
 
   .product__media-wrapper .slider-mobile-gutter .slider-button {
@@ -1464,10 +1494,7 @@ a.product__text {
 
   .thumbnail-list.slider--tablet-up .thumbnail-list__item.slider__slide {
     width: calc(25% - 0.8rem);
-  }
-
-  .product--thumbnail_slider .slider-mobile-gutter .slider-button {
-    display: flex;
+    flex-shrink: 0;
   }
 }
 
@@ -1960,5 +1987,75 @@ a.product__text {
 
   .recipient-form > input[type='checkbox']:checked + label .icon-checkmark {
     border: none;
+  }
+}
+
+/* Product USP (Figma: USPs cards) */
+.product-usp {
+  margin-top: 2.4rem;
+}
+
+.product-usp__grid {
+  display: flex;
+  gap: 2rem;
+}
+
+.product-usp__item {
+  flex: 1 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 1.6rem;
+  border-radius: 0.8rem;
+  border: 0.1rem solid rgba(var(--color-foreground), 0.12);
+  background: rgba(var(--color-foreground), 0.04);
+  text-align: center;
+}
+
+.product-usp__icon {
+  width: 2.4rem;
+  height: 2.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.product-usp__icon .svg-wrapper {
+  width: 2.4rem;
+  height: 2.4rem;
+  display: inline-flex;
+}
+
+.product-usp__icon svg,
+.product-usp__icon img {
+  width: 100%;
+  height: 100%;
+}
+
+.product-usp__icon img {
+  object-fit: contain;
+}
+
+.product-usp__title {
+  margin: 0;
+  font-size: 1.6rem;
+  line-height: 2.6rem;
+  font-weight: 700;
+  color: rgb(var(--color-foreground));
+}
+
+.product-usp__text {
+  margin: 0;
+  font-size: 1.6rem;
+  line-height: 2.6rem;
+  font-weight: 400;
+  color: rgba(var(--color-foreground), 0.75);
+}
+
+@media screen and (max-width: 749px) {
+  .product-usp__grid {
+    flex-direction: column;
+    gap: 1.2rem;
   }
 }

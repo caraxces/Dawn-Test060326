@@ -13,12 +13,64 @@ if (!customElements.get('media-gallery')) {
         if (!this.elements.thumbnails) return;
 
         this.elements.viewer.addEventListener('slideChanged', debounce(this.onSlideChanged.bind(this), 500));
+        this.thumbnailDragJustEnded = false;
         this.elements.thumbnails.querySelectorAll('[data-target]').forEach((mediaToSwitch) => {
-          mediaToSwitch
-            .querySelector('button')
-            .addEventListener('click', this.setActiveMedia.bind(this, mediaToSwitch.dataset.target, false));
+          const btn = mediaToSwitch.querySelector('button');
+          if (!btn) return;
+          btn.addEventListener('click', (e) => {
+            if (this.thumbnailDragJustEnded) {
+              e.preventDefault();
+              e.stopPropagation();
+              this.thumbnailDragJustEnded = false;
+              return;
+            }
+            this.setActiveMedia(mediaToSwitch.dataset.target, false);
+          });
         });
         if (this.dataset.desktopLayout.includes('thumbnail') && this.mql.matches) this.removeListSemantic();
+        this.initThumbnailDragScroll();
+      }
+
+      initThumbnailDragScroll() {
+        const slider = this.elements.thumbnails?.slider;
+        if (!slider) return;
+
+        let isDragging = false;
+        let hasDragged = false;
+        let startX;
+        let startScrollLeft;
+
+        const onMouseDown = (e) => {
+          if (!this.mql.matches || e.button !== 0) return;
+          isDragging = true;
+          hasDragged = false;
+          startX = e.pageX;
+          startScrollLeft = slider.scrollLeft;
+          slider.style.cursor = 'grabbing';
+          slider.style.userSelect = 'none';
+          e.preventDefault();
+        };
+
+        const onMouseMove = (e) => {
+          if (!isDragging) return;
+          const dx = e.pageX - startX;
+          if (Math.abs(dx) > 4) hasDragged = true;
+          slider.scrollLeft = startScrollLeft - dx;
+        };
+
+        const onMouseUp = () => {
+          if (isDragging) {
+            isDragging = false;
+            slider.style.cursor = '';
+            slider.style.userSelect = '';
+            if (hasDragged) this.thumbnailDragJustEnded = true;
+          }
+        };
+
+        slider.addEventListener('mousedown', onMouseDown);
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+        slider.addEventListener('mouseleave', onMouseUp);
       }
 
       onSlideChanged(event) {

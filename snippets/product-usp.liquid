@@ -1,0 +1,70 @@
+{% comment %}
+  Renders USP block on product page (Main product section).
+
+  Accepts:
+  - block: {Object} Block object
+
+  Usage:
+  {% render 'product-usp', block: block %}
+{% endcomment %}
+
+<div class="product-usp" {{ block.shopify_attributes }}>
+  <div class="product-usp__grid">
+    {%- if block.settings.title_1 != blank or block.settings.text_1 != blank -%}
+      <div class="product-usp__item">
+        <div class="product-usp__icon" aria-hidden="true">
+          {%- if block.settings.image_1 != blank -%}
+            <img
+              src="{{ block.settings.image_1 | image_url: width: 48 }}"
+              {% if block.settings.image_1.alt != blank %}
+                alt="{{ block.settings.image_1.alt | escape }}"
+              {% else %}
+                role="presentation"
+              {% endif %}
+              loading="lazy"
+              width="24"
+              height="24"
+            >
+          {%- else -%}
+            <img src="{{ 'Heart.svg' | asset_url }}" width="24" height="24" alt="" role="presentation" loading="lazy" class="product-usp__icon-svg">
+          {%- endif -%}
+        </div>
+        {%- if block.settings.title_1 != blank -%}
+          <p class="product-usp__title">{{ block.settings.title_1 }}</p>
+        {%- endif -%}
+        {%- if block.settings.text_1 != blank -%}
+          <p class="product-usp__text">{{ block.settings.text_1 }}</p>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+
+    {%- if block.settings.title_2 != blank or block.settings.text_2 != blank -%}
+      <div class="product-usp__item">
+        <div class="product-usp__icon" aria-hidden="true">
+          {%- if block.settings.image_2 != blank -%}
+            <img
+              src="{{ block.settings.image_2 | image_url: width: 48 }}"
+              {% if block.settings.image_2.alt != blank %}
+                alt="{{ block.settings.image_2.alt | escape }}"
+              {% else %}
+                role="presentation"
+              {% endif %}
+              loading="lazy"
+              width="24"
+              height="24"
+            >
+          {%- else -%}
+            <img src="{{ 'Gift.svg' | asset_url }}" width="24" height="24" alt="" role="presentation" loading="lazy" class="product-usp__icon-svg">
+          {%- endif -%}
+        </div>
+        {%- if block.settings.title_2 != blank -%}
+          <p class="product-usp__title">{{ block.settings.title_2 }}</p>
+        {%- endif -%}
+        {%- if block.settings.text_2 != blank -%}
+          <p class="product-usp__text">{{ block.settings.text_2 }}</p>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+  </div>
+</div>
+
