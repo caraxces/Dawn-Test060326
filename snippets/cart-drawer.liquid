@@ -126,22 +126,7 @@
                       <th id="CartDrawer-ColumnProductImage" role="columnheader">
                         <span class="visually-hidden">{{ 'sections.cart.headings.image' | t }}</span>
                       </th>
-                      <th
-                        id="CartDrawer-ColumnProduct"
-                        class="caption-with-letter-spacing"
-                        scope="col"
-                        role="columnheader"
-                      >
-                        {{ 'sections.cart.headings.product' | t }}
-                      </th>
-                      <th
-                        id="CartDrawer-ColumnTotal"
-                        class="right caption-with-letter-spacing"
-                        scope="col"
-                        role="columnheader"
-                      >
-                        {{ 'sections.cart.headings.total' | t }}
-                      </th>
+
                       <th id="CartDrawer-ColumnQuantity" role="columnheader">
                         <span class="visually-hidden">{{ 'sections.cart.headings.quantity' | t }}</span>
                       </th>
@@ -174,10 +159,23 @@
                       {%- if gift_wrap_product_id > 0 and item.product_id == gift_wrap_product_id -%}
                         {%- continue -%}
                       {%- endif -%}
+                      {%- liquid
+                        assign gift_key = 'giftwrap.property_key' | t
+                        assign gift_yes = 'giftwrap.property_value_yes' | t
+                        assign item_has_gift = false
+                        for prop in item.properties
+                          if prop.first == gift_key and prop.last == gift_yes
+                            assign item_has_gift = true
+                            break
+                          endif
+                        endfor
+                      -%}
                       <tr
                         id="CartDrawer-Item-{{ item.index | plus: 1 }}"
                         class="cart-item{% if item.parent_relationship.parent != null %} cart-item__nested-line{% endif %}"
                         role="row"
+                        data-has-giftwrap="{{ item_has_gift }}"
+                        data-item-quantity="{{ item.quantity }}"
                         {% if item.parent_relationship.parent != null %}
                           aria-label="{{- 'products.product.nested_label' | t: title: item.product.title, parent_title: item.parent_relationship.parent.title | escape -}}"
                         {% endif %}
@@ -201,7 +199,7 @@
                           {% endif %}
                         </td>
 
-                        <td class="cart-item__details" role="cell" headers="CartDrawer-ColumnProduct">
+                        <td class="cart-item__details" role="cell" headers="CartDrawer-ColumnProductImage">
                           {%- if settings.show_vendor -%}
                             <p class="caption-with-letter-spacing light">{{ item.product.vendor }}</p>
                           {%- endif -%}
@@ -264,7 +262,7 @@
                           </ul>
                         </td>
 
-                        <td class="cart-item__totals right" role="cell" headers="CartDrawer-ColumnTotal">
+                        <td class="cart-item__totals right" role="cell" headers="CartDrawer-ColumnProductImage">
                           {%- render 'loading-spinner' -%}
                           <div class="cart-item__price-wrapper">
                             {%- if item.original_line_price != item.final_line_price -%}
@@ -451,20 +449,9 @@
                           </quantity-popover>
                         </td>
                       </tr>
-                      {%- liquid
-                        assign gift_key = 'giftwrap.property_key' | t
-                        assign gift_yes = 'giftwrap.property_value_yes' | t
-                        assign item_has_gift = false
-                        for prop in item.properties
-                          if prop.first == gift_key and prop.last == gift_yes
-                            assign item_has_gift = true
-                            break
-                          endif
-                        endfor
-                      -%}
                       {%- if item_has_gift -%}
                         <tr class="cart-item__gift-row" role="row">
-                          <td class="cart-item__gift-cell" headers="CartDrawer-ColumnProductImage CartDrawer-ColumnProduct CartDrawer-ColumnTotal CartDrawer-ColumnQuantity" colspan="4" role="cell">
+                          <td class="cart-item__gift-cell" headers="CartDrawer-ColumnProductImage CartDrawer-ColumnQuantity" colspan="4" role="cell">
                             {%- render 'cart-giftwrap-line', cart_item: item, gift_wrap_display_price: gift_wrap_display_price -%}
                           </td>
                         </tr>

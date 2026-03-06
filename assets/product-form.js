@@ -43,7 +43,19 @@ if (!customElements.get('product-form')) {
         config.body = formData;
 
         fetch(`${routes.cart_add_url}`, config)
-          .then((response) => response.json())
+          .then((response) => {
+            if (!response.ok) {
+              const contentType = response.headers.get('content-type');
+              if (!contentType || !contentType.includes('application/json')) {
+                return {
+                  status: response.status,
+                  description: "Shopify is currently rate-limiting your connection (Too Many Requests). Please wait a few minutes and try again.",
+                  message: "Server Error"
+                };
+              }
+            }
+            return response.json();
+          })
           .then((response) => {
             if (response.status) {
               publish(PUB_SUB_EVENTS.cartError, {
@@ -98,24 +110,43 @@ if (!customElements.get('product-form')) {
               const gwFormData = new FormData();
               gwFormData.append('id', variantId);
               gwFormData.append('quantity', '1');
-              if (toKey) gwFormData.append(`properties[${toKey}]`, toVal);
-              if (fromKey) gwFormData.append(`properties[${fromKey}]`, fromVal);
-              if (msgKey) gwFormData.append(`properties[${msgKey}]`, msgVal);
+              if (toVal) gwFormData.append(`properties[${toKey}]`, toVal);
+              if (fromVal) gwFormData.append(`properties[${fromKey}]`, fromVal);
+              if (msgVal) gwFormData.append(`properties[${msgKey}]`, msgVal);
               gwFormData.append('sections', this.cart.getSectionsToRender().map((s) => s.id || s.section).filter(Boolean).join(','));
               gwFormData.append('sections_url', routes.root_url || '/');
 
-              const gwConfig = { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: gwFormData };
-              fetch(routes.cart_add_url, gwConfig)
-                .then((r) => r.json())
+              const gwConfig = {
+                method: 'POST',
+                headers: {
+                  'X-Requested-With': 'XMLHttpRequest',
+                  'Accept': 'application/json'
+                },
+                body: gwFormData
+              };
+              let addUrl = routes.cart_add_url;
+              if (!addUrl.endsWith('.js')) addUrl += '.js';
+
+              fetch(addUrl, gwConfig)
+                .then((r) => {
+                  if (!r.ok) {
+                    const ct = r.headers.get('content-type');
+                    if (!ct || !ct.includes('application/json')) {
+                      return { status: r.status, sections: null };
+                    }
+                  }
+                  return r.json();
+                })
                 .then((gwRes) => {
-                  if (gwRes.sections) {
+                  if (gwRes && gwRes.sections) {
                     this.cart.renderContents(gwRes);
                   } else {
                     this.cart.renderContents(cartResponse);
                   }
                   publish(PUB_SUB_EVENTS.cartUpdate, { source: 'product-form', cartData: gwRes });
                 })
-                .catch(() => {
+                .catch((e) => {
+                  console.error('[GiftWrap] Add failed:', e);
                   this.cart.renderContents(cartResponse);
                 });
             };

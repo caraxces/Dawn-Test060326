@@ -1,7 +1,7 @@
 /**
  * Gift wrap edit form - uses event delegation so it works after cart content is replaced via AJAX
  */
-(function() {
+(function () {
   function handleEditClick(evt) {
     var editBtn = evt.target.closest('[data-giftwrap-edit]');
     if (!editBtn) return;
@@ -56,7 +56,7 @@
     var keyYes = block.dataset.keyYes;
 
     var props = {};
-    block.querySelectorAll('.cart-giftwrap-line__prop').forEach(function(inp) {
+    block.querySelectorAll('.cart-giftwrap-line__prop').forEach(function (inp) {
       props[inp.dataset.propKey] = inp.dataset.propValue || '';
     });
     props[keyGift] = keyYes;
@@ -65,21 +65,69 @@
     if (keyMessage) props[keyMessage] = msgInput ? msgInput.value.trim() : '';
 
     updateBtn.disabled = true;
-    var body = JSON.stringify({
-      line: line,
-      quantity: qty,
-      properties: props,
-      sections: 'cart-drawer',
-      sections_url: window.location.pathname
-    });
-    var cartChangeUrl = (window.Shopify && window.Shopify.routes && window.Shopify.routes.cart_change_url) || '/cart/change.js';
-    fetch(cartChangeUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-      body: body
-    })
-      .then(function(r) { return r.text(); })
-      .then(function(text) {
+    var cartUrl = (window.Shopify && window.Shopify.routes && window.Shopify.routes.cart_url) || '/cart';
+    var cartJsUrl = cartUrl + '.js';
+
+    fetch(cartJsUrl)
+      .then(function (r) { return r.json(); })
+      .then(function (cartData) {
+        var gwProdId = window.giftWrapProductId ? parseInt(window.giftWrapProductId, 10) : null;
+        var gwVarId = window.giftWrapVariantId;
+        var hasGw = false;
+        if (gwProdId && cartData.items) {
+          hasGw = cartData.items.some(function (item) { return item.product_id === gwProdId; });
+        }
+
+        var promise = Promise.resolve();
+        // If it's missing from the cart, add 1 quantity of the gift wrap product first
+        if (!hasGw && gwVarId) {
+          var gwPayload = {
+            id: gwVarId,
+            quantity: 1,
+            properties: {}
+          };
+          if (props[keyTo]) gwPayload.properties['Gift To'] = props[keyTo];
+          if (props[keyFrom]) gwPayload.properties['Gift From'] = props[keyFrom];
+          if (props[keyMessage]) gwPayload.properties['Gift Message'] = props[keyMessage];
+
+          var addUrl = (window.Shopify && window.Shopify.routes && window.Shopify.routes.cart_add_url) || '/cart/add';
+          if (!addUrl.endsWith('.js')) addUrl += '.js';
+
+          promise = fetch(addUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ items: [gwPayload] })
+          });
+        }
+        return promise;
+      })
+      .then(function () {
+        var body = JSON.stringify({
+          line: line,
+          quantity: qty,
+          properties: props,
+          sections: 'cart-drawer',
+          sections_url: window.location.pathname
+        });
+        var cartChangeUrl = (window.Shopify && window.Shopify.routes && window.Shopify.routes.cart_change_url) || '/cart/change';
+        if (!cartChangeUrl.endsWith('.js')) cartChangeUrl += '.js';
+
+        return fetch(cartChangeUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: body
+        });
+      })
+      .then(function (r) { return r.text(); })
+      .then(function (text) {
         if (formEl) {
           formEl.classList.remove('cart-giftwrap-line__form--open');
           formEl.setAttribute('aria-hidden', 'true');
@@ -99,8 +147,7 @@
             if (currentFooter) currentFooter.replaceWith(newFooter.cloneNode(true));
           }
         } else {
-          var cartUrl = (window.Shopify && window.Shopify.routes && window.Shopify.routes.cart_url) || '/cart';
-          fetch(cartUrl + '?section_id=cart-drawer').then(function(r) { return r.text(); }).then(function(htmlText) {
+          fetch(cartUrl + '?section_id=cart-drawer').then(function (r) { return r.text(); }).then(function (htmlText) {
             var doc = new DOMParser().parseFromString(htmlText, 'text/html');
             var newItems = doc.querySelector('cart-drawer-items');
             var newFooter = doc.querySelector('.cart-drawer__footer');
@@ -115,11 +162,11 @@
           });
         }
       })
-      .catch(function() {
+      .catch(function () {
         if (formEl) formEl.classList.remove('cart-giftwrap-line__form--open');
         if (messageEl) messageEl.hidden = false;
       })
-      .finally(function() { updateBtn.disabled = false; });
+      .finally(function () { updateBtn.disabled = false; });
   }
 
   document.addEventListener('click', handleEditClick);

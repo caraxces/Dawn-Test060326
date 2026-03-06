@@ -369,6 +369,16 @@
         window.giftWrapVariantId = "";
         window.giftWrapProductId = {{ settings.gift_wrap_product_id | default: '8928211959963' | json }};
       {%- endif -%}
+      {%- assign global_gift_key = 'giftwrap.property_key' | t -%}
+      {%- assign global_gift_yes = 'giftwrap.property_value_yes' | t -%}
+      {%- if global_gift_key contains 'translation missing' -%}
+        {%- assign global_gift_key = '_Gift Wrap' -%}
+      {%- endif -%}
+      {%- if global_gift_yes contains 'translation missing' -%}
+        {%- assign global_gift_yes = 'yes' -%}
+      {%- endif -%}
+      window.giftWrapPropertyKey = {{ global_gift_key | json }};
+      window.giftWrapPropertyValue = {{ global_gift_yes | json }};
       window.accessibilityStrings = {
         imageAvailable: `{{ 'products.product.media.image_available' | t: index: '[index]' }}`,
         shareSuccess: `{{ 'general.share.success_message' | t }}`,

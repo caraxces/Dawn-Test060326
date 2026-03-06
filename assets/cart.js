@@ -304,3 +304,156 @@ if (!customElements.get('cart-note')) {
     }
   );
 }
+
+// Global subscriber to synchronize gift wrap quantity based on cart items
+console.log('[GiftWrapSync] Script loaded. Checking for PUB_SUB_EVENTS...');
+console.log('[GiftWrapSync] typeof subscribe:', typeof subscribe);
+console.log('[GiftWrapSync] typeof PUB_SUB_EVENTS:', typeof PUB_SUB_EVENTS);
+console.log('[GiftWrapSync] window.PUB_SUB_EVENTS:', window.PUB_SUB_EVENTS);
+
+if (typeof subscribe === 'function' && typeof PUB_SUB_EVENTS !== 'undefined') {
+  console.log('[GiftWrapSync] Attaching subscriber to PUB_SUB_EVENTS.cartUpdate');
+  subscribe(PUB_SUB_EVENTS.cartUpdate, function (event) {
+    console.log('\n=======================================');
+    console.log('[GiftWrapSync] CART UPDATE TRIGGERED!');
+    console.log('[GiftWrapSync] Event payload:', event);
+
+    if (event.source === 'giftwrap-sync') {
+      console.log('[GiftWrapSync] Event ignored: source is giftwrap-sync (preventing infinite loop).');
+      return;
+    }
+
+    var cartData = event.cartData;
+    if (!cartData || !cartData.items) {
+      console.log('[GiftWrapSync] Event ignored: cartData or cartData.items is missing.', cartData);
+      return;
+    }
+
+    var gwVarId = window.giftWrapVariantId;
+    var gwProdIdKey = window.giftWrapProductId;
+    console.log('[GiftWrapSync] Configured GW Variant ID:', gwVarId);
+    console.log('[GiftWrapSync] Configured GW Product ID:', gwProdIdKey);
+
+    if (!gwVarId || !gwProdIdKey) {
+      console.log('[GiftWrapSync] Event ignored: missing GW IDs in global variables.');
+      return;
+    }
+
+    var gwProdIdInt = parseInt(gwProdIdKey, 10);
+    var targetGwQty = 0;
+
+    var gwPropKey = window.giftWrapPropertyKey || '_Gift Wrap';
+    var gwPropVal = window.giftWrapPropertyValue || 'Yes';
+    console.log(`[GiftWrapSync] Looking for property mapping: "${gwPropKey}" = "${gwPropVal}"`);
+
+    var div = document.createElement('div');
+    div.innerHTML = gwPropKey;
+    var cleanPropKey = div.textContent || div.innerText || gwPropKey;
+
+    div.innerHTML = gwPropVal;
+    var cleanPropVal = div.textContent || div.innerText || gwPropVal;
+
+    var rawPropKeyStr = String(gwPropKey).toLowerCase().trim();
+    var rawPropValStr = String(gwPropVal).toLowerCase().trim();
+    var cleanPropKeyStr = String(cleanPropKey).toLowerCase().trim();
+    var cleanPropValStr = String(cleanPropVal).toLowerCase().trim();
+
+    console.log(`[GiftWrapSync] Loop starting across ${cartData.items.length} items...`);
+    cartData.items.forEach(function (item, index) {
+      console.log(`  -> Checking Item ${index}: ${item.title} (Product ID: ${item.product_id}) x ${item.quantity}`);
+      if (item.product_id === gwProdIdInt) {
+        console.log(`    -> Skipped: This is the gift wrap product itself.`);
+        return;
+      }
+      if (!item.properties) {
+        console.log(`    -> Skipped: No properties on this item.`);
+        return;
+      }
+
+      var isGiftWrapped = false;
+      if (Array.isArray(item.properties)) {
+        isGiftWrapped = item.properties.some(function (p) {
+          if (!p || p.length < 2) return false;
+          var kStr = String(p[0]).toLowerCase().trim();
+          var vStr = String(p[1]).toLowerCase().trim();
+          console.log(`      -> Prop Match Check (Array): "${kStr}" === "${vStr}"`);
+          return (kStr === rawPropKeyStr || kStr === cleanPropKeyStr) &&
+            (vStr === rawPropValStr || vStr === cleanPropValStr || vStr === 'yes');
+        });
+      } else {
+        var keys = Object.keys(item.properties);
+        for (var i = 0; i < keys.length; i++) {
+          var kStr = String(keys[i]).toLowerCase().trim();
+          var vStr = String(item.properties[keys[i]]).toLowerCase().trim();
+          console.log(`      -> Prop Match Check (Object): "${kStr}" === "${vStr}"`);
+          if ((kStr === rawPropKeyStr || kStr === cleanPropKeyStr) &&
+            (vStr === rawPropValStr || vStr === cleanPropValStr || vStr === 'yes')) {
+            isGiftWrapped = true;
+            break;
+          }
+        }
+      }
+
+      if (isGiftWrapped) {
+        console.log(`    -> 🌟 ITEM IS GIFT WRAPPED! Adding ${item.quantity} to target quantity.`);
+        targetGwQty += item.quantity;
+      } else {
+        console.log(`    -> Item is NOT gift wrapped.`);
+      }
+    });
+
+    console.log(`[GiftWrapSync] Target calculated GW Qty: ${targetGwQty}`);
+
+    var gwItem = cartData.items.find(function (item) { return item.product_id === gwProdIdInt; });
+    var currentGwQty = gwItem ? gwItem.quantity : 0;
+    console.log(`[GiftWrapSync] Current actual GW Qty in cart: ${currentGwQty}`);
+
+    if (currentGwQty !== targetGwQty) {
+      console.log(`[GiftWrapSync] Mismatch! Updating GW product quantity from ${currentGwQty} to ${targetGwQty}...`);
+      if (targetGwQty === 0 && !gwItem) {
+        console.log(`[GiftWrapSync] Already 0 and no item in cart. Doing nothing.`);
+        return;
+      }
+
+      var body = JSON.stringify({
+        id: gwItem ? gwItem.key : gwVarId,
+        quantity: targetGwQty,
+        sections: 'cart-drawer,cart-icon-bubble',
+        sections_url: window.location.pathname
+      });
+
+      var cartChangeUrl = (window.routes && window.routes.cart_change_url) ? window.routes.cart_change_url : '/cart/change';
+      if (!cartChangeUrl.endsWith('.js')) {
+        cartChangeUrl += '.js';
+      }
+
+      console.log(`[GiftWrapSync] Firing POST to ${cartChangeUrl}`);
+      fetch(cartChangeUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: body
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (state) {
+          console.log(`[GiftWrapSync] Successfully fetched cart/change. Applying UI update...`);
+          if (!state.sections) return;
+          var drawer = document.querySelector('cart-drawer');
+          if (drawer && drawer.renderContents) {
+            drawer.renderContents(state);
+          } else {
+            publish(PUB_SUB_EVENTS.cartUpdate, { source: 'giftwrap-sync', cartData: state });
+          }
+        })
+        .catch(function (err) { console.error('[GiftWrapSync] API Request Failed:', err); });
+    } else {
+      console.log('[GiftWrapSync] Match! No quantity update required.');
+    }
+    console.log('=======================================\n');
+  });
+} else {
+  console.log('[GiftWrapSync] ERROR: Cannot attach subscriber because PUB_SUB_EVENTS is undefined!');
+}
