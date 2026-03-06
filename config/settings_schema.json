@@ -1439,10 +1439,23 @@
         "content": "t:settings_schema.cart.settings.cart_drawer.header"
       },
       {
+        "type": "number",
+        "id": "free_shipping_threshold",
+        "label": "Free shipping threshold (amount in smallest currency unit)",
+        "info": "E.g. 500 for 500 VND. Leave 0 to hide the bar.",
+        "default": 500
+      },
+      {
         "type": "collection",
         "id": "cart_drawer_collection",
         "label": "t:settings_schema.cart.settings.cart_drawer.collection.label",
         "info": "t:settings_schema.cart.settings.cart_drawer.collection.info"
+      },
+      {
+        "type": "collection",
+        "id": "cart_upsell_collection",
+        "label": "Cart drawer upsell collection",
+        "info": "Products shown in 'You may also like' when cart has items. Leave blank to use the collection above."
       },
       {
         "type": "color_scheme",

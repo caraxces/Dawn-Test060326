@@ -37,6 +37,10 @@
         "tiktok": "TikTok"
       }
     },
+    "breadcrumb": {
+      "label": "Đường dẫn điều hướng",
+      "home": "Trang chủ"
+    },
     "continue_shopping": "Tiếp tục mua sắm",
     "pagination": {
       "label": "Phân trang",
@@ -286,6 +290,8 @@
     },
     "cart": {
       "title": "Giỏ hàng của bạn",
+      "free_shipping_message": "Nếu bạn chi tiêu {{ amount }}, vận chuyển miễn phí",
+      "free_shipping_reached": "Bạn đã được miễn phí vận chuyển!",
       "caption": "Các mặt hàng trong giỏ hàng",
       "remove_title": "Xóa {{ title }}",
       "note": "Hướng dẫn đặc biệt của đơn hàng",

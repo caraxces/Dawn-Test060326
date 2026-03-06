@@ -7,8 +7,11 @@
 
 {{ 'quantity-popover.css' | asset_url | stylesheet_tag }}
 {{ 'component-card.css' | asset_url | stylesheet_tag }}
+{{ 'component-list-payment.css' | asset_url | stylesheet_tag }}
+{{ 'cart-drawer-upsell.css' | asset_url | stylesheet_tag }}
 
 <script src="{{ 'cart.js' | asset_url }}" defer="defer"></script>
+<script src="{{ 'cart-drawer-upsell.js' | asset_url }}" defer="defer"></script>
 <script src="{{ 'quantity-popover.js' | asset_url }}" defer="defer"></script>
 <script src="{{ 'cart-giftwrap-line.js' | asset_url }}" defer="defer"></script>
 
@@ -77,16 +80,31 @@
       </div>
       {%- if cart != empty and cart.item_count > 0 -%}
         {%- liquid
-          assign free_shipping_threshold = 5000
+          assign free_shipping_threshold = settings.free_shipping_threshold | default: 500 | plus: 0
           assign threshold_formatted = free_shipping_threshold | money_without_trailing_zeros
-          assign progress_percent = cart.total_price | times: 100 | divided_by: free_shipping_threshold | at_most: 100
+          assign progress_percent = 0
+          if free_shipping_threshold > 0
+            assign progress_percent = cart.total_price | times: 100 | divided_by: free_shipping_threshold | at_most: 100
+          endif
+          assign free_shipping_reached = false
+          if cart.total_price >= free_shipping_threshold and free_shipping_threshold > 0
+            assign free_shipping_reached = true
+          endif
         -%}
-        <div class="cart-drawer__free-shipping" data-free-shipping-threshold="{{ free_shipping_threshold }}">
-          <p class="cart-drawer__free-shipping-text">{{ 'sections.cart.free_shipping_message' | t: amount: threshold_formatted }}</p>
-          <div class="cart-drawer__free-shipping-bar" role="presentation">
-            <div class="cart-drawer__free-shipping-bar-inner" style="width: {{ progress_percent }}%;"></div>
+        {%- if free_shipping_threshold > 0 -%}
+          <div class="cart-drawer__free-shipping{% if free_shipping_reached %} cart-drawer__free-shipping--reached{% endif %}" data-free-shipping-threshold="{{ free_shipping_threshold }}">
+            <p class="cart-drawer__free-shipping-text">
+              {%- if free_shipping_reached -%}
+                {{ 'sections.cart.free_shipping_reached' | t }}
+              {%- else -%}
+                {{ 'sections.cart.free_shipping_message' | t: amount: threshold_formatted }}
+              {%- endif -%}
+            </p>
+            <div class="cart-drawer__free-shipping-bar" role="presentation">
+              <div class="cart-drawer__free-shipping-bar-inner" style="width: {{ progress_percent }}%;"></div>
+            </div>
           </div>
-        </div>
+        {%- endif -%}
       {%- endif -%}
       <cart-drawer-items
         {% if cart == empty %}
@@ -137,8 +155,11 @@
                     {%- else -%}
                       {%- assign gift_wrap_product_id = settings.gift_wrap_product_id | plus: 0 -%}
                     {%- endif -%}
+                    {%- comment -%} Always use gift wrap product price when available (matches product page) {%- endcomment -%}
                     {%- assign gift_wrap_display_price = '' -%}
-                    {%- if gift_wrap_product_id > 0 -%}
+                    {%- if gw_product != blank -%}
+                      {%- assign gift_wrap_display_price = gw_product.price | money_without_trailing_zeros -%}
+                    {%- elsif gift_wrap_product_id > 0 -%}
                       {%- for gw_item in cart.items -%}
                         {%- if gw_item.product_id == gift_wrap_product_id -%}
                           {%- assign gift_wrap_display_price = gw_item.final_price | money_without_trailing_zeros -%}
@@ -146,9 +167,7 @@
                         {%- endif -%}
                       {%- endfor -%}
                     {%- endif -%}
-                    {%- if gift_wrap_display_price == '' and gw_product != blank -%}
-                      {%- assign gift_wrap_display_price = gw_product.price | money_without_trailing_zeros -%}
-                    {%- elsif gift_wrap_display_price == '' -%}
+                    {%- if gift_wrap_display_price == '' -%}
                       {%- assign gift_wrap_display_price = 1500 | money_without_trailing_zeros -%}
                     {%- endif -%}
                     {%- for item in cart.items -%}
@@ -567,6 +586,23 @@
             {{ 'sections.cart.continue_shopping' | t }}
           </a>
         </div>
+
+        {%- comment -%} We accept payment methods {%- endcomment -%}
+        {%- if shop.enabled_payment_types.size > 0 -%}
+          <div class="cart-drawer__payment">
+            <p class="cart-drawer__payment-label caption">{{ 'sections.cart.we_accept' | t }}</p>
+            <ul class="list list-payment" role="list">
+              {%- for type in shop.enabled_payment_types -%}
+                <li class="list-payment__item">
+                  {{ type | payment_type_svg_tag: class: 'icon icon--full-color' }}
+                </li>
+              {%- endfor -%}
+            </ul>
+          </div>
+        {%- endif -%}
+
+        {%- comment -%} Upsell: You may also like {%- endcomment -%}
+        {% render 'cart-drawer-upsell' %}
       </div>
     </div>
   </div>

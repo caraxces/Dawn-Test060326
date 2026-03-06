@@ -1,0 +1,36 @@
+{% comment %}
+  Breadcrumb navigation for product page
+  Usage: {% render 'breadcrumb', product: product %}
+{% endcomment %}
+
+<nav class="breadcrumb product__breadcrumb" aria-label="{{ 'general.breadcrumb.label' | t }}">
+  <ol class="breadcrumb__list" itemscope itemtype="https://schema.org/BreadcrumbList">
+    <li class="breadcrumb__item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+      <a href="{{ routes.root_url }}" class="breadcrumb__link link link--text" itemprop="item">
+        <span itemprop="name">{{ 'general.breadcrumb.home' | t }}</span>
+      </a>
+      <meta itemprop="position" content="1">
+    </li>
+    {%- if product.collections.size > 0 -%}
+      {%- assign breadcrumb_collection = product.collections.first -%}
+      <li class="breadcrumb__item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <span class="breadcrumb__separator" aria-hidden="true">/</span>
+        <a href="{{ breadcrumb_collection.url }}" class="breadcrumb__link link link--text" itemprop="item">
+          <span itemprop="name">{{ breadcrumb_collection.title | escape }}</span>
+        </a>
+        <meta itemprop="position" content="2">
+      </li>
+      <li class="breadcrumb__item breadcrumb__item--current" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <span class="breadcrumb__separator" aria-hidden="true">/</span>
+        <span itemprop="name">{{ product.title | escape }}</span>
+        <meta itemprop="position" content="3">
+      </li>
+    {%- else -%}
+      <li class="breadcrumb__item breadcrumb__item--current" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <span class="breadcrumb__separator" aria-hidden="true">/</span>
+        <span itemprop="name">{{ product.title | escape }}</span>
+        <meta itemprop="position" content="2">
+      </li>
+    {%- endif -%}
+  </ol>
+</nav>

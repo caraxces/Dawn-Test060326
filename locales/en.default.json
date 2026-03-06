@@ -37,6 +37,10 @@
         "tiktok": "TikTok"
       }
     },
+    "breadcrumb": {
+      "label": "Breadcrumb",
+      "home": "Home"
+    },
     "continue_shopping": "Continue shopping",
     "pagination": {
       "label": "Pagination",
@@ -306,7 +310,11 @@
     },
     "cart": {
       "title": "Your cart",
+      "you_may_also_like": "You may also like",
+      "add": "Add",
+      "we_accept": "We accept",
       "free_shipping_message": "If you spend {{ amount }}, then shipping is free",
+      "free_shipping_reached": "You've got free shipping!",
       "continue_shopping": "or Continue Shopping",
       "caption": "Cart items",
       "remove": "Remove",
