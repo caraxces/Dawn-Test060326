@@ -6,12 +6,12 @@
   expandable form collects the recipient name, sender name and a message
   as Shopify cart line item properties.
 
-  This component uses the native <details>/<summary> pattern — no JS required.
+  Design matches Figma: clean checkbox row (no large chevron), optional
+  "Only 3 left!" stock message, form with To / From / Gift message.
 
   Accepts:
   - product: {Object} - The current product object (required)
   - section: {Object} - The parent section object, used to read settings (required)
-  - gift_price: {Number} - Price of gift wrap in shop's currency subunit, e.g. 1500 for £15 (Optional, falls back to section setting)
 
   Usage:
   {% render 'giftwrap-add-on', product: product, section: section %}
@@ -21,111 +21,94 @@
   assign enable_giftwrap = section.settings.enable_giftwrap | default: true
   assign gift_price_setting = section.settings.giftwrap_price | default: 1500
   assign display_price = gift_price_setting | money
+  assign stock_message = section.settings.giftwrap_stock_message | default: ''
+  assign show_stock_message = section.settings.show_giftwrap_stock_message | default: false
 -%}
 
 {%- if enable_giftwrap -%}
-  <giftwrap-addon class="giftwrap-add-on tw-block tw-w-full" data-giftwrap-addon>
-
-    <details class="tw-w-full tw-bg-neutral-50 tw-rounded tw-overflow-hidden">
-
-      {%- comment -%} ── Checkbox + summary row ── {%- endcomment -%}
-      <summary class="tw-flex tw-items-center tw-justify-between tw-gap-2 tw-p-3 tw-cursor-pointer tw-list-none [&::-webkit-details-marker]:tw-hidden">
-
-        <label class="tw-flex tw-items-center tw-gap-2 tw-cursor-pointer tw-flex-1" for="giftwrap-checkbox">
-          {%- comment -%} Custom checkbox – CSS-only styled square {%- endcomment -%}
-          <span class="tw-relative tw-flex-none tw-w-5 tw-h-5">
-            <input
-              type="checkbox"
-              id="giftwrap-checkbox"
-              name="properties[{{ 'giftwrap.property_key' | t }}]"
-              value="{{ 'giftwrap.property_value_yes' | t }}"
-              class="tw-peer tw-absolute tw-inset-0 tw-opacity-0 tw-cursor-pointer"
-              data-giftwrap-checkbox
-              aria-controls="giftwrap-form"
-              aria-expanded="false"
-            >
-            {%- comment -%} Unchecked state {%- endcomment -%}
-            <span class="tw-block tw-w-5 tw-h-5 tw-border tw-border-neutral-300 tw-rounded peer-checked:tw-hidden" aria-hidden="true"></span>
-            {%- comment -%} Checked state {%- endcomment -%}
-            <span class="tw-hidden tw-w-5 tw-h-5 tw-bg-neutral-900 tw-rounded tw-items-center tw-justify-center peer-checked:tw-flex" aria-hidden="true">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 8" fill="none" class="tw-w-2.5 tw-h-2" aria-hidden="true">
-                <path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </span>
+  <div class="giftwrap-add-on" data-giftwrap-addon>
+    {%- comment -%} Row: checkbox + label + optional "Only 3 left!" (no chevron) {%- endcomment -%}
+    <div class="giftwrap-add-on__row">
+      <label class="giftwrap-add-on__label" for="giftwrap-checkbox-{{ section.id }}">
+        <input
+          type="checkbox"
+          id="giftwrap-checkbox-{{ section.id }}"
+          name="properties[{{ 'giftwrap.property_key' | t }}]"
+          value="{{ 'giftwrap.property_value_yes' | t }}"
+          class="giftwrap-add-on__checkbox"
+          data-giftwrap-checkbox
+          aria-controls="giftwrap-form-{{ section.id }}"
+          aria-expanded="false"
+        >
+        <span class="giftwrap-add-on__box-wrap">
+          <span class="giftwrap-add-on__box" aria-hidden="true"></span>
+          <span class="giftwrap-add-on__check" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 8" fill="none" width="10" height="8" aria-hidden="true">
+              <path d="M1 4l2.5 2.5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
           </span>
-          <span class="tw-text-sm tw-text-neutral-900">
-            {{ 'giftwrap.add_label' | t: price: display_price }}
-          </span>
-        </label>
-
-        {%- comment -%} Chevron icon – rotates when open {%- endcomment -%}
-        <span class="tw-transition-transform tw-duration-200 details-open:tw-rotate-180 tw-flex-none" aria-hidden="true">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 8" fill="none" class="tw-w-3 tw-h-2">
-            <path d="M1 1l5 5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
         </span>
+        <span class="giftwrap-add-on__text">{{ 'giftwrap.add_label' | t: price: display_price }}</span>
+      </label>
+      {%- if show_stock_message and stock_message != blank -%}
+        <span class="giftwrap-add-on__stock">
+          <span class="giftwrap-add-on__stock-dot" aria-hidden="true"></span>
+          {{ stock_message }}
+        </span>
+      {%- endif -%}
+    </div>
 
-      </summary>
-
-      {%- comment -%} ── Expandable gift message form ── {%- endcomment -%}
-      <div id="giftwrap-form" class="tw-flex tw-flex-col tw-gap-3 tw-px-3 tw-pb-3" data-giftwrap-form>
-
-        {%- comment -%} Divider {%- endcomment -%}
-        <hr class="tw-border-t tw-border-neutral-200 tw-m-0">
-
-        {%- comment -%} To: field {%- endcomment -%}
-        <div class="tw-flex tw-flex-col tw-gap-2">
-          <label
-            for="giftwrap-to"
-            class="tw-text-sm tw-text-neutral-900"
-          >
-            {{ 'giftwrap.to_label' | t }}
-          </label>
-          <input
-            type="text"
-            id="giftwrap-to"
-            name="properties[{{ 'giftwrap.to_property' | t }}]"
-            placeholder="{{ 'giftwrap.to_placeholder' | t }}"
-            class="tw-w-full tw-border tw-border-neutral-300 tw-rounded tw-px-4 tw-py-2 tw-text-sm tw-text-neutral-900 placeholder:tw-text-neutral-300 focus:tw-outline-none focus:tw-border-neutral-900"
-          >
-        </div>
-
-        {%- comment -%} From: field {%- endcomment -%}
-        <div class="tw-flex tw-flex-col tw-gap-2">
-          <label
-            for="giftwrap-from"
-            class="tw-text-sm tw-text-neutral-900"
-          >
-            {{ 'giftwrap.from_label' | t }}
-          </label>
-          <input
-            type="text"
-            id="giftwrap-from"
-            name="properties[{{ 'giftwrap.from_property' | t }}]"
-            placeholder="{{ 'giftwrap.from_placeholder' | t }}"
-            class="tw-w-full tw-border tw-border-neutral-300 tw-rounded tw-px-4 tw-py-2 tw-text-sm tw-text-neutral-900 placeholder:tw-text-neutral-300 focus:tw-outline-none focus:tw-border-neutral-900"
-          >
-        </div>
-
-        {%- comment -%} Message field {%- endcomment -%}
-        <div class="tw-flex tw-flex-col tw-gap-2">
-          <label
-            for="giftwrap-message"
-            class="tw-text-sm tw-text-neutral-900"
-          >
-            {{ 'giftwrap.message_label' | t }}
-          </label>
-          <textarea
-            id="giftwrap-message"
-            name="properties[{{ 'giftwrap.message_property' | t }}]"
-            placeholder="{{ 'giftwrap.message_placeholder' | t }}"
-            rows="4"
-            class="tw-w-full tw-border tw-border-neutral-300 tw-rounded tw-px-4 tw-py-3 tw-text-sm tw-text-neutral-900 placeholder:tw-text-neutral-300 focus:tw-outline-none focus:tw-border-neutral-900 tw-resize-y tw-min-h-20"
-          ></textarea>
-        </div>
-
+    {%- comment -%} Expandable form (shown when checkbox checked via CSS :has) {%- endcomment -%}
+    <div id="giftwrap-form-{{ section.id }}" class="giftwrap-add-on__form" data-giftwrap-form>
+      <div class="giftwrap-add-on__field">
+        <label class="giftwrap-add-on__field-label" for="giftwrap-to-{{ section.id }}">{{ 'giftwrap.to_label' | t }}</label>
+        <input
+          type="text"
+          id="giftwrap-to-{{ section.id }}"
+          name="properties[{{ 'giftwrap.to_property' | t }}]"
+          placeholder="{{ 'giftwrap.to_placeholder' | t }}"
+          class="giftwrap-add-on__input"
+          autocomplete="off"
+        >
       </div>
-    </details>
+      <div class="giftwrap-add-on__field">
+        <label class="giftwrap-add-on__field-label" for="giftwrap-from-{{ section.id }}">{{ 'giftwrap.from_label' | t }}</label>
+        <input
+          type="text"
+          id="giftwrap-from-{{ section.id }}"
+          name="properties[{{ 'giftwrap.from_property' | t }}]"
+          placeholder="{{ 'giftwrap.from_placeholder' | t }}"
+          class="giftwrap-add-on__input"
+          autocomplete="off"
+        >
+      </div>
+      <div class="giftwrap-add-on__field">
+        <label class="giftwrap-add-on__field-label" for="giftwrap-message-{{ section.id }}">{{ 'giftwrap.message_label' | t }}</label>
+        <textarea
+          id="giftwrap-message-{{ section.id }}"
+          name="properties[{{ 'giftwrap.message_property' | t }}]"
+          placeholder="{{ 'giftwrap.message_placeholder' | t }}"
+          rows="4"
+          class="giftwrap-add-on__textarea"
+        ></textarea>
+      </div>
+    </div>
+  </div>
 
-  </giftwrap-addon>
+  <script>
+    (function() {
+      var el = document.querySelector('[data-giftwrap-addon]');
+      if (!el) return;
+      var checkbox = el.querySelector('[data-giftwrap-checkbox]');
+      var form = el.querySelector('[data-giftwrap-form]');
+      if (!checkbox || !form) return;
+      function update() {
+        var open = checkbox.checked;
+        checkbox.setAttribute('aria-expanded', open);
+        el.classList.toggle('giftwrap-add-on--open', open);
+      }
+      checkbox.addEventListener('change', update);
+      update();
+    })();
+  </script>
 {%- endif -%}

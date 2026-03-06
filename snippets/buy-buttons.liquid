@@ -4,11 +4,12 @@
   - product: {Object} product object.
   - block: {Object} passing the block information.
   - product_form_id: {String} product form id.
+  - section: {Object} section object (for gift wrap settings).
   - section_id: {String} id of section to which this snippet belongs.
   - show_pickup_availability: {Boolean} for the pickup availability. If true the pickup availability is rendered, false - not rendered (optional).
 
   Usage:
-  {% render 'buy-buttons', block: block, product: product, product_form_id: product_form_id, section_id: section.id, show_pickup_availability: true %}
+  {% render 'buy-buttons', block: block, product: product, product_form_id: product_form_id, section: section, section_id: section.id, show_pickup_availability: true %}
 {% endcomment %}
 <div {{ block.shopify_attributes }}>
   {%- if product != blank -%}
@@ -27,7 +28,7 @@
     <product-form
       class="product-form"
       data-hide-errors="{{ gift_card_recipient_feature_active }}"
-      data-section-id="{{ section.id }}"
+      data-section-id="{{ section_id }}"
     >
       <div class="product-form__error-message-wrapper" role="alert" hidden>
         <span class="svg-wrapper">
@@ -58,6 +59,13 @@
 
         {%- if gift_card_recipient_feature_active -%}
           {%- render 'gift-card-recipient-form', product: product, form: form, section: section -%}
+        {%- endif -%}
+
+        {%- comment -%} Gift wrap option (Wrap as a gift?) — shown for non–gift-card products when enabled {%- endcomment -%}
+        {%- if gift_card_recipient_feature_active == false and section != blank and section.settings.enable_giftwrap -%}
+          <div class="product-form__gift-wrap-wrapper">
+            {%- render 'giftwrap-add-on', product: product, section: section -%}
+          </div>
         {%- endif -%}
 
         <div class="product-form__buttons">

@@ -546,9 +546,9 @@
     "to_label": "To",
     "to_placeholder": "Recipient's name",
     "from_label": "From",
-    "from_placeholder": "Your name",
-    "message_label": "Message (optional)",
-    "message_placeholder": "Add a personal note...",
+    "from_placeholder": "Sender's name",
+    "message_label": "Gift message",
+    "message_placeholder": "Type your message here",
     "wrapped_label": "Gift wrapped",
     "edit_label": "Edit",
     "edit_aria_label": "Edit gift wrap options for {{ product }}"

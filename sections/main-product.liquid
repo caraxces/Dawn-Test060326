@@ -482,6 +482,7 @@
                   block: block,
                   product: product,
                   product_form_id: product_form_id,
+                  section: section,
                   section_id: section.id,
                   show_pickup_availability: true
                 -%}
@@ -2238,6 +2239,34 @@
       "id": "enable_video_looping",
       "default": false,
       "label": "t:sections.main-product.settings.enable_video_looping.label"
+    },
+    {
+      "type": "header",
+      "content": "Gift wrap"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_giftwrap",
+      "default": true,
+      "label": "Show gift wrap option"
+    },
+    {
+      "type": "number",
+      "id": "giftwrap_price",
+      "label": "Gift wrap price (in cents)",
+      "default": 1500
+    },
+    {
+      "type": "checkbox",
+      "id": "show_giftwrap_stock_message",
+      "default": false,
+      "label": "Show stock message (e.g. Only 3 left!)"
+    },
+    {
+      "type": "text",
+      "id": "giftwrap_stock_message",
+      "label": "Gift wrap stock message",
+      "default": "Only 3 left!"
     },
     {
       "type": "header",
