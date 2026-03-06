@@ -15,12 +15,13 @@
   {%- if product != blank -%}
     {%- liquid
       assign gift_card_recipient_feature_active = false
-      if block.settings.show_gift_card_recipient and product.gift_card?
+      assign show_gift_card = block.settings.show_gift_card_recipient
+      if show_gift_card != false and product.gift_card?
         assign gift_card_recipient_feature_active = true
       endif
 
       assign show_dynamic_checkout = false
-      if block.settings.show_dynamic_checkout and gift_card_recipient_feature_active == false
+      if block.settings.show_dynamic_checkout != false and gift_card_recipient_feature_active == false
         assign show_dynamic_checkout = true
       endif
     -%}
@@ -58,13 +59,30 @@
         >
 
         {%- if gift_card_recipient_feature_active -%}
-          {%- render 'gift-card-recipient-form', product: product, form: form, section: section -%}
+          <div id="ProductFormRecipient-{{ section.id }}" class="product-form__recipient-wrapper">
+            {%- render 'gift-card-recipient-form', product: product, form: form, section: section -%}
+          </div>
         {%- endif -%}
 
-        {%- comment -%} Gift wrap option (Wrap as a gift?) — shown for non–gift-card products when enabled {%- endcomment -%}
-        {%- if gift_card_recipient_feature_active == false and section != blank and section.settings.enable_giftwrap -%}
-          <div class="product-form__gift-wrap-wrapper">
-            {%- render 'giftwrap-add-on', product: product, section: section -%}
+        {%- comment -%} Low stock alert (Only X left!) — for non–gift-card products {%- endcomment -%}
+        {%- liquid
+          assign show_low_stock = true
+          if block.settings.show_low_stock_alert == false
+            assign show_low_stock = false
+          endif
+          assign variant = product.selected_or_first_available_variant
+          assign inv_qty = variant.inventory_quantity | default: -1 | plus: 0
+          assign stock_alert_visible = false
+          if gift_card_recipient_feature_active == false and show_low_stock and inv_qty >= 1 and inv_qty < 10
+            assign stock_alert_visible = true
+          endif
+        -%}
+        {%- if gift_card_recipient_feature_active == false and show_low_stock -%}
+          <div id="ProductFormStockAlert-{{ section.id }}" class="product-form__stock-alert{% unless stock_alert_visible %} product-form__stock-alert--empty{% endunless %}">
+            {%- if stock_alert_visible -%}
+              <span class="product-form__stock-dot" aria-hidden="true"></span>
+              {{ 'giftwrap.stock_low_label' | t: count: inv_qty }}
+            {%- endif -%}
           </div>
         {%- endif -%}
 
@@ -91,7 +109,7 @@
                 disabled
               {% endif %}
             >
-              <span>
+              <span class="product-form__submit-text">
                 {%- if product.selected_or_first_available_variant == null -%}
                   {{ 'products.product.unavailable' | t }}
                 {%- elsif product.selected_or_first_available_variant.available == false or quantity_rule_soldout -%}
@@ -99,6 +117,9 @@
                 {%- else -%}
                   {{ 'products.product.add_to_cart' | t }}
                 {%- endif -%}
+              </span>
+              <span class="product-form__submit-arrow" aria-hidden="true">
+                <span class="svg-wrapper">{{- 'icon-arrow.svg' | inline_asset_content -}}</span>
               </span>
               {%- render 'loading-spinner' -%}
             </button>

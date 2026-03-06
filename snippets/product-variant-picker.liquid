@@ -5,8 +5,9 @@
   - product: {Object} product object.
   - block: {Object} passing the block information.
   - product_form_id: {String} Id of the product form to which the variant picker is associated.
+  - section: {Object} section object (optional, for sizing chart modal id).
   Usage:
-  {% render 'product-variant-picker', product: product, block: block, product_form_id: product_form_id %}
+  {% render 'product-variant-picker', product: product, block: block, product_form_id: product_form_id, section: section %}
 {% endcomment %}
 {%- unless product.has_only_default_variant -%}
   <variant-selects
@@ -18,6 +19,11 @@
       {%- liquid
         assign swatch_count = option.values | map: 'swatch' | compact | size
         assign picker_type = block.settings.picker_type
+        assign is_size_option = false
+        assign option_name_down = option.name | downcase
+        if option_name_down == 'size' or option_name_down == 'kích thước' or option_name_down == 'kich thuoc'
+          assign is_size_option = true
+        endif
 
         if swatch_count > 0 and block.settings.swatch_shape != 'none'
           if block.settings.picker_type == 'dropdown'
@@ -29,22 +35,42 @@
       -%}
       {%- if picker_type == 'swatch' -%}
         <fieldset class="js product-form__input product-form__input--swatch">
-          <legend class="form__label">
-            {{ option.name }}:
-            <span data-selected-value>
-              {{- option.selected_value -}}
-            </span>
-          </legend>
-          {% render 'product-variant-options',
-            product: product,
-            option: option,
-            block: block,
-            picker_type: picker_type
-          %}
+          <div class="product-form__option-header">
+            <legend class="form__label">
+              {{ option.name }}:
+              <span data-selected-value>
+                {{- option.selected_value -}}
+              </span>
+            </legend>
+            {%- if is_size_option and section != blank -%}
+              <modal-opener data-modal="#SizingChartModal-{{ section.id }}" class="sizing-chart-opener">
+                <button type="button" class="link link--text underlined-link product-form__sizing-chart-btn">
+                  {{ 'products.product.sizing_chart' | t }}
+                </button>
+              </modal-opener>
+            {%- endif -%}
+          </div>
+          <div class="product-form__swatch-options">
+            {% render 'product-variant-options',
+              product: product,
+              option: option,
+              block: block,
+              picker_type: picker_type
+            %}
+          </div>
         </fieldset>
       {%- elsif picker_type == 'button' -%}
         <fieldset class="js product-form__input product-form__input--pill">
-          <legend class="form__label">{{ option.name }}</legend>
+          <div class="product-form__option-header">
+            <legend class="form__label">{{ option.name }}</legend>
+            {%- if is_size_option and section != blank -%}
+              <modal-opener data-modal="#SizingChartModal-{{ section.id }}" class="sizing-chart-opener">
+                <button type="button" class="link link--text underlined-link product-form__sizing-chart-btn">
+                  {{ 'products.product.sizing_chart' | t }}
+                </button>
+              </modal-opener>
+            {%- endif -%}
+          </div>
           {% render 'product-variant-options',
             product: product,
             option: option,
@@ -54,9 +80,18 @@
         </fieldset>
       {%- else -%}
         <div class="product-form__input product-form__input--dropdown">
-          <label class="form__label" for="Option-{{ section.id }}-{{ forloop.index0 }}">
-            {{ option.name }}
-          </label>
+          <div class="product-form__option-header">
+            <label class="form__label" for="Option-{{ section.id }}-{{ forloop.index0 }}">
+              {{ option.name }}
+            </label>
+            {%- if is_size_option and section != blank -%}
+              <modal-opener data-modal="#SizingChartModal-{{ section.id }}" class="sizing-chart-opener">
+                <button type="button" class="link link--text underlined-link product-form__sizing-chart-btn">
+                  {{ 'products.product.sizing_chart' | t }}
+                </button>
+              </modal-opener>
+            {%- endif -%}
+          </div>
           <div class="select">
             {%- if picker_type == 'swatch_dropdown' -%}
               <span

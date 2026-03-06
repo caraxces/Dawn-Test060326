@@ -476,7 +476,7 @@
                 %}
 
               {%- when 'variant_picker' -%}
-                {% render 'product-variant-picker', product: product, block: block, product_form_id: product_form_id %}
+                {% render 'product-variant-picker', product: product, block: block, product_form_id: product_form_id, section: section %}
               {%- when 'buy_buttons' -%}
                 {%- render 'buy-buttons',
                   block: block,
@@ -713,6 +713,28 @@
       </modal-dialog>
     {%- endfor -%}
 
+    <modal-dialog id="SizingChartModal-{{ section.id }}" class="product-popup-modal sizing-chart-modal">
+      <div role="dialog" aria-label="{{ 'products.product.sizing_chart' | t }}" aria-modal="true" class="product-popup-modal__content" tabindex="-1">
+        <button id="ModalClose-SizingChart-{{ section.id }}" type="button" class="product-popup-modal__toggle" aria-label="{{ 'accessibility.close' | t }}">
+          {{- 'icon-close.svg' | inline_asset_content -}}
+        </button>
+        <div class="product-popup-modal__content-info sizing-chart__content">
+          <h2 class="h2">{{ 'products.product.sizing_chart' | t }}</h2>
+          <p class="sizing-chart__intro">{{ 'products.product.sizing_chart_intro' | t }}</p>
+          <div class="sizing-chart__body-guide">
+            <p><strong>{{ 'products.product.sizing_chart_measurements' | t }}</strong></p>
+            <ul class="sizing-chart__list">
+              <li>{{ 'products.product.sizing_chart_chest' | t }}</li>
+              <li>{{ 'products.product.sizing_chart_waist' | t }}</li>
+              <li>{{ 'products.product.sizing_chart_hips' | t }}</li>
+              <li>{{ 'products.product.sizing_chart_inseam' | t }}</li>
+            </ul>
+            <p class="sizing-chart__tip">{{ 'products.product.sizing_chart_tip' | t }}</p>
+          </div>
+        </div>
+      </div>
+    </modal-dialog>
+
     {%- if product.media.size > 0 -%}
       <script src="{{ 'product-modal.js' | asset_url }}" defer="defer"></script>
       <script src="{{ 'media-gallery.js' | asset_url }}" defer="defer"></script>
@@ -926,6 +948,12 @@
           "default": true,
           "label": "t:sections.main-product.blocks.buy_buttons.settings.show_gift_card_recipient.label",
           "info": "t:sections.main-product.blocks.buy_buttons.settings.show_gift_card_recipient.info"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_low_stock_alert",
+          "default": true,
+          "label": "Show low stock alert (e.g. Only X left!)"
         }
       ]
     },
@@ -2239,34 +2267,6 @@
       "id": "enable_video_looping",
       "default": false,
       "label": "t:sections.main-product.settings.enable_video_looping.label"
-    },
-    {
-      "type": "header",
-      "content": "Gift wrap"
-    },
-    {
-      "type": "checkbox",
-      "id": "enable_giftwrap",
-      "default": true,
-      "label": "Show gift wrap option"
-    },
-    {
-      "type": "number",
-      "id": "giftwrap_price",
-      "label": "Gift wrap price (in cents)",
-      "default": 1500
-    },
-    {
-      "type": "checkbox",
-      "id": "show_giftwrap_stock_message",
-      "default": false,
-      "label": "Show stock message (e.g. Only 3 left!)"
-    },
-    {
-      "type": "text",
-      "id": "giftwrap_stock_message",
-      "label": "Gift wrap stock message",
-      "default": "Only 3 left!"
     },
     {
       "type": "header",

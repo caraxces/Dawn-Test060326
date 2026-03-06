@@ -56,21 +56,91 @@ variant-selects {
   z-index: 1;
 }
 
-/* Custom styles for Pill display type */
+/* Custom styles for Pill display type – 6 options per row */
+.product-form__input--pill {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.6rem 0.8rem;
+  align-items: start;
+}
+
+/* Header row: legend (Size) left, See sizing chart right */
+.product-form__option-header {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6rem;
+  gap: 1rem;
+}
+
+.product-form__option-header .form__label {
+  margin: 0;
+}
+
+.product-form__option-header .sizing-chart-opener {
+  flex-shrink: 0;
+}
+
+.product-form__option-header .product-form__sizing-chart-btn {
+  font-size: 1.3rem;
+  padding: 0;
+  white-space: nowrap;
+  color: #5900FF;
+}
+
+.product-form__option-header .product-form__sizing-chart-btn:hover {
+  color: #4a00e0;
+}
+
+/* Dropdown: same header layout */
+.product-form__input--dropdown .product-form__option-header {
+  margin-bottom: 0.8rem;
+}
+
+/* Standalone sizing chart (product with only default variant) */
+.sizing-chart-opener--standalone {
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.sizing-chart-opener--standalone .product-form__sizing-chart-btn {
+  color: #5900FF;
+}
+
+.sizing-chart-opener--standalone .product-form__sizing-chart-btn:hover {
+  color: #4a00e0;
+}
+
+.product-form__input--pill .product-form__option-value {
+  display: block;
+  min-width: 0;
+}
+
+.product-form__input--pill .product-form__option-value input[type='radio'] + label {
+  margin: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media screen and (max-width: 749px) {
+  .product-form__input--pill {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 .product-form__input--pill input[type='radio'] + label {
-  border: var(--variant-pills-border-width) solid rgba(var(--color-foreground), var(--variant-pills-border-opacity));
+  border: 0.1rem solid rgba(var(--color-foreground), 0.3);
   background-color: rgb(var(--color-background));
-  color: rgba(var(--color-foreground));
-  border-radius: var(--variant-pills-radius);
   color: rgb(var(--color-foreground));
+  border-radius: 4px;
   display: inline-block;
-  margin: 0.7rem 0.5rem 0.2rem 0;
-  padding: 1rem 2rem;
+  padding: 1rem 0.8rem;
   font-size: 1.4rem;
   letter-spacing: 0.1rem;
   line-height: 1;
   text-align: center;
-  transition: border var(--duration-short) ease;
+  transition: border var(--duration-short) ease, font-weight var(--duration-short) ease;
   cursor: pointer;
   position: relative;
 }
@@ -78,23 +148,25 @@ variant-selects {
 .product-form__input--pill input[type='radio'] + label:before {
   content: '';
   position: absolute;
-  top: calc(var(--variant-pills-border-width) * -1);
-  right: calc(var(--variant-pills-border-width) * -1);
-  bottom: calc(var(--variant-pills-border-width) * -1);
-  left: calc(var(--variant-pills-border-width) * -1);
+  top: -0.1rem;
+  right: -0.1rem;
+  bottom: -0.1rem;
+  left: -0.1rem;
   z-index: -1;
-  border-radius: var(--variant-pills-radius);
-  box-shadow: var(--variant-pills-shadow-horizontal-offset) var(--variant-pills-shadow-vertical-offset)
-    var(--variant-pills-shadow-blur-radius) rgba(var(--color-shadow), var(--variant-pills-shadow-opacity));
+  border-radius: 4px;
 }
 
 .product-form__input--pill input[type='radio'] + label:hover {
-  border-color: rgb(var(--color-foreground));
+  border-color: rgba(var(--color-foreground), 0.5);
 }
 
+/* Active: bold border only, no background change */
 .product-form__input--pill input[type='radio']:checked + label {
-  background-color: rgb(var(--color-foreground));
-  color: rgb(var(--color-background));
+  background-color: rgb(var(--color-background));
+  color: rgb(var(--color-foreground));
+  border-width: 0.2rem;
+  border-color: rgb(var(--color-foreground));
+  font-weight: 600;
 }
 
 @media screen and (forced-colors: active) {
@@ -109,7 +181,7 @@ variant-selects {
 }
 
 .product-form__input--pill input[type='radio']:checked + label::selection {
-  background-color: rgba(var(--color-background), 0.3);
+  background-color: rgba(var(--color-foreground), 0.2);
 }
 
 .product-form__input--pill input[type='radio']:disabled + label,
@@ -132,16 +204,28 @@ variant-selects {
   box-shadow: 0 0 0 0.3rem rgb(var(--color-background)), 0 0 0 0.5rem rgba(var(--color-foreground), 0.55);
 }
 
-/* Custom styles for Swatch display type */
+/* Custom styles for Swatch display type – label on top, color dots below */
 .product-form__input--swatch {
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.product-form__input--swatch .product-form__option-header {
+  width: 100%;
+  margin-bottom: 0.6rem;
+}
+
+.product-form__swatch-options {
+  display: flex;
   flex-wrap: wrap;
+  gap: 0.8rem 1.2rem;
+  align-items: center;
 }
 
 .product-form__input--swatch .swatch-input__input + .swatch-input__label {
   --swatch-input--size: 3.6rem;
-
-  margin: 0.7rem 1.2rem 0.2rem 0;
+  margin: 0;
 }
 
 @media screen and (min-width: 750px) {

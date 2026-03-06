@@ -69,12 +69,16 @@
       popup.hidden = false;
       trigger.setAttribute('aria-expanded', 'true');
       renderFavorites();
+      requestAnimationFrame(function() { popup.classList.add('header__account-popup--open'); });
       document.addEventListener('click', closeOnClickOutside);
     }
 
     function closePopup() {
-      popup.hidden = true;
-      trigger.setAttribute('aria-expanded', 'false');
+      popup.classList.remove('header__account-popup--open');
+      setTimeout(function() {
+        popup.hidden = true;
+        trigger.setAttribute('aria-expanded', 'false');
+      }, 220);
       document.removeEventListener('click', closeOnClickOutside);
     }
 

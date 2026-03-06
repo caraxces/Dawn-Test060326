@@ -12,17 +12,24 @@
   Accepts:
   - product: {Object} - The current product object (required)
   - section: {Object} - The parent section object, used to read settings (required)
+  - enable_giftwrap: {Boolean} - Override from block (optional)
+  - show_low_stock_alert: {Boolean} - Show "Only X left!" when low stock (optional)
 
   Usage:
   {% render 'giftwrap-add-on', product: product, section: section %}
 {% endcomment %}
 
 {%- liquid
-  assign enable_giftwrap = section.settings.enable_giftwrap | default: true
+  assign enable_giftwrap = enable_giftwrap | default: section.settings.enable_giftwrap | default: true
   assign gift_price_setting = section.settings.giftwrap_price | default: 1500
   assign display_price = gift_price_setting | money
-  assign stock_message = section.settings.giftwrap_stock_message | default: ''
-  assign show_stock_message = section.settings.show_giftwrap_stock_message | default: false
+  assign variant = product.selected_or_first_available_variant
+  assign inv_qty = variant.inventory_quantity | default: -1 | plus: 0
+  assign show_low_stock = show_low_stock_alert | default: section.settings.show_giftwrap_stock_message | default: true
+  assign show_stock_alert = false
+  if show_low_stock and inv_qty >= 1 and inv_qty < 10
+    assign show_stock_alert = true
+  endif
 -%}
 
 {%- if enable_giftwrap -%}
@@ -50,10 +57,15 @@
         </span>
         <span class="giftwrap-add-on__text">{{ 'giftwrap.add_label' | t: price: display_price }}</span>
       </label>
-      {%- if show_stock_message and stock_message != blank -%}
+      {%- if show_stock_alert -%}
         <span class="giftwrap-add-on__stock">
           <span class="giftwrap-add-on__stock-dot" aria-hidden="true"></span>
-          {{ stock_message }}
+          {{ 'giftwrap.stock_low_label' | t: count: inv_qty }}
+        </span>
+      {%- elsif section.settings.show_giftwrap_stock_message and section.settings.giftwrap_stock_message != blank -%}
+        <span class="giftwrap-add-on__stock">
+          <span class="giftwrap-add-on__stock-dot" aria-hidden="true"></span>
+          {{ section.settings.giftwrap_stock_message }}
         </span>
       {%- endif -%}
     </div>

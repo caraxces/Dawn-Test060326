@@ -186,6 +186,14 @@
       "vendor": "Vendor",
       "value_unavailable": "{{ option_value }} - Unavailable",
       "variant_sold_out_or_unavailable": "Variant sold out or unavailable",
+      "sizing_chart": "See sizing chart",
+      "sizing_chart_intro": "Use your body measurements to find the best fit. Measure in a straight line and keep the tape snug but not tight.",
+      "sizing_chart_measurements": "Key measurements:",
+      "sizing_chart_chest": "Chest: under arms, around the fullest part.",
+      "sizing_chart_waist": "Waist: at the natural waistline.",
+      "sizing_chart_hips": "Hips: around the fullest part of the hips.",
+      "sizing_chart_inseam": "Inseam: from crotch to desired hem (for bottoms).",
+      "sizing_chart_tip": "Compare your measurements to the size table on the product page or on the size label.",
       "video_exit_message": "{{ title }} opens full screen video in same window.",
       "view_full_details": "View full details",
       "xr_button": "View in your space",
@@ -565,6 +573,7 @@
     "edit_label": "Edit",
     "edit_aria_label": "Edit gift wrap options for {{ product }}",
     "update_label": "Update",
-    "cancel_label": "Cancel"
+    "cancel_label": "Cancel",
+    "stock_low_label": "Only {{ count }} left!"
   }
 }

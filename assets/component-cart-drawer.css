@@ -8,11 +8,14 @@
   display: flex;
   justify-content: flex-end;
   background-color: rgba(var(--color-foreground), 0.5);
-  transition: visibility var(--duration-default) ease;
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility var(--duration-medium) ease, opacity var(--duration-medium) ease;
 }
 
 .drawer.active {
   visibility: visible;
+  opacity: 1;
 }
 
 .drawer__inner {
@@ -26,7 +29,7 @@
   display: flex;
   flex-direction: column;
   transform: translateX(100%);
-  transition: transform var(--duration-default) ease;
+  transition: transform var(--duration-medium) cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .drawer__inner-empty {
