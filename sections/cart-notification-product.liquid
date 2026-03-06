@@ -1,5 +1,18 @@
 {%- if cart != empty -%}
+  {%- assign gw_product = all_products[settings.gift_wrap_product_handle] -%}
+  {%- if gw_product != blank -%}
+    {%- assign gift_wrap_product_id = gw_product.id -%}
+  {%- else -%}
+    {%- assign gift_wrap_product_id = settings.gift_wrap_product_id | plus: 0 -%}
+  {%- endif -%}
+  {%- assign gift_key = 'giftwrap.property_key' | t -%}
+  {%- assign gift_to_key = 'giftwrap.to_property' | t -%}
+  {%- assign gift_from_key = 'giftwrap.from_property' | t -%}
+  {%- assign gift_msg_key = 'giftwrap.message_property' | t -%}
   {%- for item in cart.items -%}
+    {%- if gift_wrap_product_id > 0 and item.product_id == gift_wrap_product_id -%}
+      {%- continue -%}
+    {%- endif -%}
     <div id="cart-notification-product-{{ item.key }}" class="cart-item">
       {%- if item.image -%}
         <div class="cart-notification-product__image global-media-settings">
@@ -28,7 +41,11 @@
           {%- endunless -%}
           {%- for property in item.properties -%}
             {%- assign property_first_char = property.first | slice: 0 -%}
-            {%- if property.last != blank and property_first_char != '_' -%}
+            {%- assign is_gift_prop = false -%}
+            {%- if property.first == gift_key or property.first == gift_to_key or property.first == gift_from_key or property.first == gift_msg_key -%}
+              {%- assign is_gift_prop = true -%}
+            {%- endif -%}
+            {%- if property.last != blank and property_first_char != '_' and is_gift_prop == false -%}
               <div class="product-option">
                 <dt>{{ property.first }}:</dt>
                 <dd>

@@ -377,13 +377,46 @@ cart-drawer-items {
   text-decoration-thickness: 0.2rem;
 }
 
-.cart-giftwrap-line__edit-icon {
+/* When form is open: Edit hidden, Cancel visible (same position) */
+.cart-giftwrap-line:has(.cart-giftwrap-line__form--open) .cart-giftwrap-line__edit {
+  display: none;
+}
+
+.cart-giftwrap-line__cancel--top {
+  display: none;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  font-size: 1.2rem;
+  line-height: 1.58;
+  letter-spacing: 0.12px;
+  color: rgb(var(--color-foreground));
+  text-decoration: underline;
+  text-underline-offset: 0.1em;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.cart-giftwrap-line__cancel--top:hover {
+  text-decoration-thickness: 0.2rem;
+}
+
+.cart-giftwrap-line:has(.cart-giftwrap-line__form--open) .cart-giftwrap-line__cancel--top {
+  display: inline-flex;
+}
+
+.cart-giftwrap-line__edit-icon,
+.cart-giftwrap-line__cancel-icon {
   display: inline-flex;
   width: 1.6rem;
   height: 1.6rem;
 }
 
-.cart-giftwrap-line__edit-icon svg {
+.cart-giftwrap-line__edit-icon svg,
+.cart-giftwrap-line__cancel-icon svg {
   width: 100%;
   height: 100%;
 }
@@ -395,17 +428,26 @@ cart-drawer-items {
   color: rgba(var(--color-foreground), 0.6);
 }
 
-/* Inline edit form (Figma) – only visible when opened via Edit */
+/* Inline edit form (Figma) – dropdown animation when opened via Edit */
 .cart-giftwrap-line__form {
-  display: none;
+  display: grid;
+  grid-template-rows: 0fr;
+  overflow: hidden;
+  transition: grid-template-rows 0.25s ease-out;
+}
+
+.cart-giftwrap-line__form.cart-giftwrap-line__form--open {
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 0.25s ease-out;
+}
+
+.cart-giftwrap-line__form-inner {
+  min-height: 0;
+  display: flex;
   flex-direction: column;
   gap: 0.8rem;
   padding-top: 0.4rem;
   border-top: 0.1rem solid rgba(var(--color-foreground), 0.1);
-}
-
-.cart-giftwrap-line__form.cart-giftwrap-line__form--open {
-  display: flex;
 }
 
 .cart-giftwrap-line__field {
@@ -440,23 +482,39 @@ cart-drawer-items {
 
 .cart-giftwrap-line__form-actions {
   display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 0.8rem;
 }
 
 .cart-giftwrap-line__update {
+  width: 100%;
   min-height: 4.4rem;
 }
 
-.cart-giftwrap-line__cancel {
-  font-size: 1.2rem;
-  padding: 0;
+.cart-quantity-select {
+  min-width: 5rem;
+  padding: 0.8rem 2.4rem 0.8rem 1rem;
+  font-size: 1.4rem;
+  border: 0.1rem solid rgba(var(--color-foreground), 0.2);
+  border-radius: var(--inputs-radius, 0);
+  background: rgb(var(--color-background));
+  color: rgb(var(--color-foreground));
+  cursor: pointer;
+  appearance: auto;
+}
+
+.cart-remove-button--text {
+  padding: 0.4rem 0;
   background: none;
   border: none;
-  cursor: pointer;
-  font-family: inherit;
   text-decoration: underline;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: rgb(var(--color-foreground));
+}
+
+.cart-remove-button--text:hover {
+  text-decoration-thickness: 0.2rem;
 }
 
 .cart-drawer .cart-item .loading__spinner {

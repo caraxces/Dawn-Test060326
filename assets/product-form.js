@@ -35,9 +35,9 @@ if (!customElements.get('product-form')) {
         if (this.cart) {
           formData.append(
             'sections',
-            this.cart.getSectionsToRender().map((section) => section.id)
+            this.cart.getSectionsToRender().map((section) => section.id || section.section).filter(Boolean)
           );
-          formData.append('sections_url', window.location.pathname);
+          formData.append('sections_url', routes.root_url || '/');
           this.cart.setActiveElement(document.activeElement);
         }
         config.body = formData;
@@ -76,6 +76,50 @@ if (!customElements.get('product-form')) {
                 CartPerformance.measureFromMarker('add:wait-for-subscribers', startMarker);
               });
             this.error = false;
+
+            const addGiftWrapAndRender = (cartResponse) => {
+              const giftWrapCheckbox = this.form.querySelector('[data-giftwrap-checkbox]');
+              const variantId = window.giftWrapVariantId;
+              if (!giftWrapCheckbox?.checked || !variantId) {
+                this.cart.renderContents(cartResponse);
+                return;
+              }
+              const addon = this.form.querySelector('[data-giftwrap-addon]');
+              const toKeyForm = addon?.dataset.giftwrapToKey || '_Gift To';
+              const fromKeyForm = addon?.dataset.giftwrapFromKey || '_Gift From';
+              const msgKeyForm = addon?.dataset.giftwrapMessageKey || '_Gift Message';
+              const toKey = 'Gift To';
+              const fromKey = 'Gift From';
+              const msgKey = 'Gift Message';
+              const toVal = (this.form.querySelector(`[name="properties[${toKeyForm}]"]`)?.value || '').trim();
+              const fromVal = (this.form.querySelector(`[name="properties[${fromKeyForm}]"]`)?.value || '').trim();
+              const msgVal = (this.form.querySelector(`[name="properties[${msgKeyForm}]"]`)?.value || '').trim();
+
+              const gwFormData = new FormData();
+              gwFormData.append('id', variantId);
+              gwFormData.append('quantity', '1');
+              if (toKey) gwFormData.append(`properties[${toKey}]`, toVal);
+              if (fromKey) gwFormData.append(`properties[${fromKey}]`, fromVal);
+              if (msgKey) gwFormData.append(`properties[${msgKey}]`, msgVal);
+              gwFormData.append('sections', this.cart.getSectionsToRender().map((s) => s.id || s.section).filter(Boolean).join(','));
+              gwFormData.append('sections_url', routes.root_url || '/');
+
+              const gwConfig = { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: gwFormData };
+              fetch(routes.cart_add_url, gwConfig)
+                .then((r) => r.json())
+                .then((gwRes) => {
+                  if (gwRes.sections) {
+                    this.cart.renderContents(gwRes);
+                  } else {
+                    this.cart.renderContents(cartResponse);
+                  }
+                  publish(PUB_SUB_EVENTS.cartUpdate, { source: 'product-form', cartData: gwRes });
+                })
+                .catch(() => {
+                  this.cart.renderContents(cartResponse);
+                });
+            };
+
             const quickAddModal = this.closest('quick-add-modal');
             if (quickAddModal) {
               document.body.addEventListener(
@@ -83,7 +127,7 @@ if (!customElements.get('product-form')) {
                 () => {
                   setTimeout(() => {
                     CartPerformance.measure("add:paint-updated-sections", () => {
-                      this.cart.renderContents(response);
+                      addGiftWrapAndRender(response);
                     });
                   });
                 },
@@ -92,7 +136,7 @@ if (!customElements.get('product-form')) {
               quickAddModal.hide(true);
             } else {
               CartPerformance.measure("add:paint-updated-sections", () => {
-                this.cart.renderContents(response);
+                addGiftWrapAndRender(response);
               });
             }
           })

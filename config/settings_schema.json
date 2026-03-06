@@ -1449,6 +1449,24 @@
         "id": "cart_color_scheme",
         "label": "t:sections.all.colors.label",
         "default": "scheme-1"
+      },
+      {
+        "type": "header",
+        "content": "Gift wrap (hidden add-on)"
+      },
+      {
+        "type": "text",
+        "id": "gift_wrap_product_handle",
+        "label": "Gift wrap product handle",
+        "default": "gift-wrap",
+        "info": "Slug trong URL sản phẩm: yourstore.com/products/[handle]. Thay bằng handle thật của sản phẩm."
+      },
+      {
+        "type": "text",
+        "id": "gift_wrap_product_id",
+        "label": "Gift wrap product ID",
+        "default": "8928211959963",
+        "info": "Để ẩn khỏi cart. Lấy từ URL Admin: .../products/8928211959963"
       }
     ]
   }

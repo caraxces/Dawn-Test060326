@@ -58,32 +58,41 @@ class CartItems extends HTMLElement {
   validateQuantity(event) {
     const inputValue = parseInt(event.target.value);
     const index = event.target.dataset.index;
+    const maxVal = parseInt(event.target.max) || parseInt(event.target.dataset.max) || 999;
+    const stepVal = parseInt(event.target.step) || parseInt(event.target.dataset.step) || 1;
     let message = '';
 
-    if (inputValue < event.target.dataset.min) {
-      message = window.quickOrderListStrings.min_error.replace('[min]', event.target.dataset.min);
-    } else if (inputValue > parseInt(event.target.max)) {
-      message = window.quickOrderListStrings.max_error.replace('[max]', event.target.max);
-    } else if (inputValue % parseInt(event.target.step) !== 0) {
-      message = window.quickOrderListStrings.step_error.replace('[step]', event.target.step);
+    if (inputValue < parseInt(event.target.dataset.min || 0)) {
+      message = (window.quickOrderListStrings && window.quickOrderListStrings.min_error)
+        ? window.quickOrderListStrings.min_error.replace('[min]', event.target.dataset.min)
+        : '';
+    } else if (inputValue > maxVal) {
+      message = (window.quickOrderListStrings && window.quickOrderListStrings.max_error)
+        ? window.quickOrderListStrings.max_error.replace('[max]', maxVal)
+        : '';
+    } else if (stepVal > 1 && inputValue % stepVal !== 0) {
+      message = (window.quickOrderListStrings && window.quickOrderListStrings.step_error)
+        ? window.quickOrderListStrings.step_error.replace('[step]', stepVal)
+        : '';
     }
 
     if (message) {
       this.setValidity(event, index, message);
     } else {
-      event.target.setCustomValidity('');
-      event.target.reportValidity();
+      if (event.target.setCustomValidity) event.target.setCustomValidity('');
+      if (event.target.reportValidity) event.target.reportValidity();
       this.updateQuantity(
         index,
         inputValue,
         event,
-        document.activeElement.getAttribute('name'),
+        (document.activeElement && document.activeElement.getAttribute('name')) || event.target.getAttribute('name'),
         event.target.dataset.quantityVariantId
       );
     }
   }
 
   onChange(event) {
+    if (!event.target.dataset.index && !event.target.matches('.quantity__input, .quantity__select, .cart-quantity-select')) return;
     this.validateQuantity(event);
   }
 

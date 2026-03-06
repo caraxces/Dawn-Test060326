@@ -64,12 +64,16 @@
           </div>
         {%- endif -%}
 
-        {%- comment -%} Low stock alert (Only X left!) — for non–gift-card products {%- endcomment -%}
         {%- liquid
           assign show_low_stock = true
           if block.settings.show_low_stock_alert == false
             assign show_low_stock = false
           endif
+          assign giftwrap_enabled = true
+          if block.settings.enable_giftwrap == false
+            assign giftwrap_enabled = false
+          endif
+          assign giftwrap_price = block.settings.giftwrap_price | default: 1500
           assign variant = product.selected_or_first_available_variant
           assign inv_qty = variant.inventory_quantity | default: -1 | plus: 0
           assign stock_alert_visible = false
@@ -77,7 +81,16 @@
             assign stock_alert_visible = true
           endif
         -%}
-        {%- if gift_card_recipient_feature_active == false and show_low_stock -%}
+
+        {%- comment -%} Gift wrap option (Wrap as a gift?) — for non–gift-card products {%- endcomment -%}
+        {%- if gift_card_recipient_feature_active == false and giftwrap_enabled -%}
+          <div id="ProductFormGiftwrap-{{ section.id }}" class="product-form__gift-wrap-wrapper">
+            {%- render 'giftwrap-add-on', product: product, section: section, enable_giftwrap: true, giftwrap_price: giftwrap_price, show_low_stock_alert: show_low_stock -%}
+          </div>
+        {%- endif -%}
+
+        {%- comment -%} Standalone stock alert only when gift wrap is OFF (gift wrap has its own stock alert) {%- endcomment -%}
+        {%- if gift_card_recipient_feature_active == false and show_low_stock and giftwrap_enabled == false -%}
           <div id="ProductFormStockAlert-{{ section.id }}" class="product-form__stock-alert{% unless stock_alert_visible %} product-form__stock-alert--empty{% endunless %}">
             {%- if stock_alert_visible -%}
               <span class="product-form__stock-dot" aria-hidden="true"></span>

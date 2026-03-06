@@ -309,6 +309,7 @@
       "free_shipping_message": "If you spend {{ amount }}, then shipping is free",
       "continue_shopping": "or Continue Shopping",
       "caption": "Cart items",
+      "remove": "Remove",
       "remove_title": "Remove {{ title }}",
       "estimated_total": "Estimated total",
       "new_estimated_total": "New estimated total",
@@ -557,11 +558,11 @@
     }
   },
   "giftwrap": {
-    "property_key": "Gift Wrap",
+    "property_key": "_Gift Wrap",
     "property_value_yes": "yes",
-    "to_property": "Gift To",
-    "from_property": "Gift From",
-    "message_property": "Gift Message",
+    "to_property": "_Gift To",
+    "from_property": "_Gift From",
+    "message_property": "_Gift Message",
     "add_label": "Wrap as a gift? (+{{ price }})",
     "to_label": "To",
     "to_placeholder": "Recipient's name",

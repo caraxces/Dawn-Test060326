@@ -2,7 +2,7 @@
   cart-giftwrap-line (Figma: Cart drawer gift block + inline edit form)
 
   Renders gift-wrap summary and, when Edit is clicked, an inline form (To, From, Gift message + Update).
-  Accepts: cart_item (required)
+  Accepts: cart_item (required), gift_wrap_display_price (optional - giá từ sản phẩm dịch vụ ẩn)
 {% endcomment %}
 
 {%- liquid
@@ -18,7 +18,11 @@
       assign is_giftwrapped = true
     endif
   endfor
-  assign giftwrap_display_price = 1500 | money_without_trailing_zeros
+  if gift_wrap_display_price != blank
+    assign giftwrap_display_price = gift_wrap_display_price
+  else
+    assign giftwrap_display_price = 1500 | money_without_trailing_zeros
+  endif
 
   assign to_val = ''
   assign from_val = ''
@@ -71,6 +75,12 @@
           </svg>
         </span>
       </button>
+      <button type="button" class="cart-giftwrap-line__cancel cart-giftwrap-line__cancel--top" data-giftwrap-cancel aria-label="{{ 'giftwrap.cancel_label' | t }}">
+        {{ 'giftwrap.cancel_label' | t }}
+        <span class="cart-giftwrap-line__cancel-icon" aria-hidden="true">
+          {{- 'icon-close-small.svg' | inline_asset_content -}}
+        </span>
+      </button>
     </div>
 
     <div class="cart-giftwrap-line__message" data-giftwrap-message>
@@ -82,6 +92,7 @@
     </div>
 
     <div class="cart-giftwrap-line__form" data-giftwrap-form aria-hidden="true">
+      <div class="cart-giftwrap-line__form-inner">
       <div class="cart-giftwrap-line__field">
         <label class="cart-giftwrap-line__field-label" for="giftwrap-drawer-to-{{ line_index }}">{{ 'giftwrap.to_label' | t }}</label>
         <input type="text" id="giftwrap-drawer-to-{{ line_index }}" class="cart-giftwrap-line__input" data-giftwrap-to placeholder="{{ 'giftwrap.to_placeholder' | t }}" value="{{ to_val | escape }}" autocomplete="off">
@@ -96,99 +107,8 @@
       </div>
       <div class="cart-giftwrap-line__form-actions">
         <button type="button" class="button button--primary cart-giftwrap-line__update" data-giftwrap-update>{{ 'giftwrap.update_label' | t }}</button>
-        <button type="button" class="link link--text cart-giftwrap-line__cancel" data-giftwrap-cancel>{{ 'giftwrap.cancel_label' | t }}</button>
+      </div>
       </div>
     </div>
   </div>
-
-  <script>
-    (function() {
-      var block = document.querySelector('[data-giftwrap-line][data-line-index="{{ line_index }}"]');
-      if (!block) return;
-      var editBtn = block.querySelector('[data-giftwrap-edit]');
-      var messageEl = block.querySelector('[data-giftwrap-message]');
-      var formEl = block.querySelector('[data-giftwrap-form]');
-      var toInput = block.querySelector('[data-giftwrap-to]');
-      var fromInput = block.querySelector('[data-giftwrap-from]');
-      var msgInput = block.querySelector('[data-giftwrap-message-input]');
-      var updateBtn = block.querySelector('[data-giftwrap-update]');
-      var cancelBtn = block.querySelector('[data-giftwrap-cancel]');
-
-      function showForm() {
-        if (messageEl) messageEl.hidden = true;
-        if (formEl) { formEl.classList.add('cart-giftwrap-line__form--open'); formEl.setAttribute('aria-hidden', 'false'); toInput && toInput.focus(); }
-      }
-      function hideForm() {
-        if (formEl) { formEl.classList.remove('cart-giftwrap-line__form--open'); formEl.setAttribute('aria-hidden', 'true'); }
-        if (messageEl) messageEl.hidden = false;
-      }
-
-      if (editBtn) editBtn.addEventListener('click', showForm);
-      if (cancelBtn) cancelBtn.addEventListener('click', hideForm);
-
-      if (updateBtn && formEl) {
-        updateBtn.addEventListener('click', function() {
-          var line = parseInt(block.dataset.lineIndex, 10);
-          var qty = parseInt(block.dataset.quantity, 10);
-          var keyTo = block.dataset.keyTo;
-          var keyFrom = block.dataset.keyFrom;
-          var keyMessage = block.dataset.keyMessage;
-          var keyGift = block.dataset.keyGift;
-          var keyYes = block.dataset.keyYes;
-
-          var props = {};
-          block.querySelectorAll('.cart-giftwrap-line__prop').forEach(function(inp) {
-            props[inp.dataset.propKey] = inp.dataset.propValue || '';
-          });
-          props[keyGift] = keyYes;
-          if (keyTo) props[keyTo] = toInput ? toInput.value.trim() : '';
-          if (keyFrom) props[keyFrom] = fromInput ? fromInput.value.trim() : '';
-          if (keyMessage) props[keyMessage] = msgInput ? msgInput.value.trim() : '';
-
-          updateBtn.disabled = true;
-          var body = JSON.stringify({
-            line: line,
-            quantity: qty,
-            properties: props,
-            sections: 'cart-drawer',
-            sections_url: window.location.pathname
-          });
-          fetch((window.Shopify && window.Shopify.routes && window.Shopify.routes.cart_change_url) || '/cart/change.js', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-            body: body
-          })
-            .then(function(r) { return r.text();           })
-            .then(function(text) {
-              hideForm();
-              var state = JSON.parse(text);
-              if (state.sections && state.sections['cart-drawer']) {
-                var html = new DOMParser().parseFromString(state.sections['cart-drawer'], 'text/html');
-                var newItems = html.querySelector('cart-drawer-items');
-                var newFooter = html.querySelector('.cart-drawer__footer');
-                if (newItems) {
-                  var current = document.querySelector('cart-drawer-items');
-                  if (current) current.replaceWith(newItems.cloneNode(true));
-                }
-                if (newFooter) {
-                  var currentFooter = document.querySelector('.drawer__footer .cart-drawer__footer');
-                  if (currentFooter) currentFooter.replaceWith(newFooter.cloneNode(true));
-                }
-              } else {
-                var cartUrl = (window.Shopify && window.Shopify.routes && window.Shopify.routes.cart_url) || '/cart';
-                fetch(cartUrl + '?section_id=cart-drawer').then(function(r) { return r.text(); }).then(function(htmlText) {
-                  var doc = new DOMParser().parseFromString(htmlText, 'text/html');
-                  var newItems = doc.querySelector('cart-drawer-items');
-                  var newFooter = doc.querySelector('.cart-drawer__footer');
-                  if (newItems) { var cur = document.querySelector('cart-drawer-items'); if (cur) cur.replaceWith(newItems); }
-                  if (newFooter) { var curF = document.querySelector('.drawer__footer .cart-drawer__footer'); if (curF) curF.replaceWith(newFooter); }
-                });
-              }
-            })
-            .catch(function() { hideForm(); })
-            .finally(function() { updateBtn.disabled = false; });
-        });
-      }
-    })();
-  </script>
 {%- endif -%}

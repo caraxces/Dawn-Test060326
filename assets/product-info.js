@@ -192,6 +192,7 @@ if (!customElements.get('product-info')) {
           updateSourceFromDestination('Volume');
           updateSourceFromDestination('Price-Per-Item', ({ classList }) => classList.contains('hidden'));
           updateSourceFromDestination('ProductFormRecipient');
+          updateSourceFromDestination('ProductFormGiftwrap');
           updateSourceFromDestination('ProductFormStockAlert');
 
           this.updateQuantityRules(this.sectionId, html);

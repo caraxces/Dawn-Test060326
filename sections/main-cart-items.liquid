@@ -78,7 +78,20 @@
               </thead>
 
               <tbody>
+                {%- assign gw_product = all_products[settings.gift_wrap_product_handle] -%}
+                {%- if gw_product != blank -%}
+                  {%- assign gift_wrap_product_id = gw_product.id -%}
+                {%- else -%}
+                  {%- assign gift_wrap_product_id = settings.gift_wrap_product_id | plus: 0 -%}
+                {%- endif -%}
+                {%- assign gift_key = 'giftwrap.property_key' | t -%}
+                {%- assign gift_to_key = 'giftwrap.to_property' | t -%}
+                {%- assign gift_from_key = 'giftwrap.from_property' | t -%}
+                {%- assign gift_msg_key = 'giftwrap.message_property' | t -%}
                 {%- for item in cart.items -%}
+                  {%- if gift_wrap_product_id > 0 and item.product_id == gift_wrap_product_id -%}
+                    {%- continue -%}
+                  {%- endif -%}
                   <tr
                     class="cart-item {% if item.parent_relationship.parent != null %}cart-item__nested-line{% endif %}"
                     id="CartItem-{{ item.index | plus: 1 }}"
@@ -110,27 +123,6 @@
 
                       <a href="{{ item.url }}" class="cart-item__name h4 break">{{ item.product.title | escape }}</a>
 
-                      {%- if item.original_price != item.final_price -%}
-                        <div class="cart-item__discounted-prices">
-                          <span class="visually-hidden">
-                            {{ 'products.product.price.regular_price' | t }}
-                          </span>
-                          <s class="cart-item__old-price product-option">
-                            {{- item.original_price | money -}}
-                          </s>
-                          <span class="visually-hidden">
-                            {{ 'products.product.price.sale_price' | t }}
-                          </span>
-                          <strong class="cart-item__final-price product-option">
-                            {{ item.final_price | money }}
-                          </strong>
-                        </div>
-                      {%- else -%}
-                        <div class="product-option">
-                          {{ item.original_price | money }}
-                        </div>
-                      {%- endif -%}
-
                       {%- if item.product.has_only_default_variant == false
                         or item.properties.size != 0
                         or item.selling_plan_allocation != null
@@ -147,7 +139,11 @@
 
                           {%- for property in item.properties -%}
                             {%- assign property_first_char = property.first | slice: 0 -%}
-                            {%- if property.last != blank and property_first_char != '_' -%}
+                            {%- assign is_gift_prop = false -%}
+                            {%- if property.first == gift_key or property.first == gift_to_key or property.first == gift_from_key or property.first == gift_msg_key -%}
+                              {%- assign is_gift_prop = true -%}
+                            {%- endif -%}
+                            {%- if property.last != blank and property_first_char != '_' and is_gift_prop == false -%}
                               <div class="product-option">
                                 <dt>{{ property.first }}:</dt>
                                 <dd>
@@ -235,61 +231,30 @@
                                 {{- 'icon-info.svg' | inline_asset_content -}}
                               </button>
                             {%- endif -%}
-                            <quantity-input class="quantity cart-quantity">
-                              {% assign can_update_quantity = item.instructions.can_update_quantity | default: true %}
-                              <button
-                                class="quantity__button"
-                                name="minus"
-                                type="button"
-                                {% if can_update_quantity == false %}
-                                  disabled
-                                {% endif %}
-                              >
-                                <span class="visually-hidden">
-                                  {{- 'products.product.quantity.decrease' | t: product: item.product.title | escape -}}
-                                </span>
-                                <span class="svg-wrapper">
-                                  {{- 'icon-minus.svg' | inline_asset_content -}}
-                                </span>
-                              </button>
-                              <input
-                                class="quantity__input"
-                                data-quantity-variant-id="{{ item.variant.id }}"
-                                type="number"
-                                name="updates[]"
-                                value="{{ item.quantity }}"
-                                {% # theme-check-disable %}
-                                data-cart-quantity="{{ cart | item_count_for_variant: item.variant.id }}"
-                                min="0"
-                                data-min="{{ item.variant.quantity_rule.min }}"
-                                {% if item.variant.quantity_rule.max != null %}
-                                  max="{{ item.variant.quantity_rule.max }}"
-                                {% endif %}
-                                step="{{ item.variant.quantity_rule.increment }}"
-                                {% # theme-check-enable %}
-                                aria-label="{{ 'products.product.quantity.input_label' | t: product: item.product.title | escape }}"
-                                id="Quantity-{{ item.index | plus: 1 }}"
-                                data-index="{{ item.index | plus: 1 }}"
-                                {% if can_update_quantity == false %}
-                                  disabled
-                                {% endif %}
-                              >
-                              <button
-                                class="quantity__button"
-                                name="plus"
-                                type="button"
-                                {% if can_update_quantity == false %}
-                                  disabled
-                                {% endif %}
-                              >
-                                <span class="visually-hidden">
-                                  {{- 'products.product.quantity.increase' | t: product: item.product.title | escape -}}
-                                </span>
-                                <span class="svg-wrapper">
-                                  {{- 'icon-plus.svg' | inline_asset_content -}}
-                                </span>
-                              </button>
-                            </quantity-input>
+                            {%- liquid
+                              assign can_update_quantity = item.instructions.can_update_quantity | default: true
+                              assign qty_max = item.variant.quantity_rule.max | default: 10
+                              if item.variant.inventory_management == 'shopify' and item.variant.inventory_quantity > 0 and item.variant.inventory_quantity < qty_max
+                                assign qty_max = item.variant.inventory_quantity
+                              endif
+                              assign qty_max = qty_max | at_least: 1
+                            -%}
+                            <select
+                              class="quantity__select cart-quantity-select"
+                              name="updates[]"
+                              data-quantity-variant-id="{{ item.variant.id }}"
+                              data-index="{{ item.index | plus: 1 }}"
+                              data-min="{{ item.variant.quantity_rule.min }}"
+                              data-max="{{ qty_max }}"
+                              data-step="{{ item.variant.quantity_rule.increment }}"
+                              aria-label="{{ 'products.product.quantity.input_label' | t: product: item.product.title | escape }}"
+                              id="Quantity-{{ item.index | plus: 1 }}"
+                              {% if can_update_quantity == false %}disabled{% endif %}
+                            >
+                              {%- for i in (1..qty_max) -%}
+                                <option value="{{ i }}" {% if i == item.quantity %}selected{% endif %}>{{ i }}</option>
+                              {%- endfor -%}
+                            </select>
                           </div>
                           <cart-remove-button
                             id="Remove-{{ item.index | plus: 1 }}"
@@ -301,12 +266,10 @@
                           >
                             <a
                               href="{{ item.url_to_remove }}"
-                              class="button button--tertiary"
+                              class="button button--tertiary cart-remove-button--text"
                               aria-label="{{ 'sections.cart.remove_title' | t: title: item.title | escape }}"
                             >
-                              <span class="svg-wrapper">
-                                {{- 'icon-remove.svg' | inline_asset_content -}}
-                              </span>
+                              {{ 'sections.cart.remove' | t }}
                             </a>
                           </cart-remove-button>
                         </div>

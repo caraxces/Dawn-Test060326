@@ -13,6 +13,7 @@
   - product: {Object} - The current product object (required)
   - section: {Object} - The parent section object, used to read settings (required)
   - enable_giftwrap: {Boolean} - Override from block (optional)
+  - giftwrap_price: {Number} - Price in cents (optional)
   - show_low_stock_alert: {Boolean} - Show "Only X left!" when low stock (optional)
 
   Usage:
@@ -21,11 +22,20 @@
 
 {%- liquid
   assign enable_giftwrap = enable_giftwrap | default: section.settings.enable_giftwrap | default: true
-  assign gift_price_setting = section.settings.giftwrap_price | default: 1500
+  assign gift_price_setting = giftwrap_price | default: section.settings.giftwrap_price | default: 1500
   assign display_price = gift_price_setting | money
+  if settings.gift_wrap_product_handle != blank
+    assign gw_product = all_products[settings.gift_wrap_product_handle]
+    if gw_product != blank
+      assign display_price = gw_product.price | money_without_trailing_zeros
+    endif
+  endif
   assign variant = product.selected_or_first_available_variant
   assign inv_qty = variant.inventory_quantity | default: -1 | plus: 0
-  assign show_low_stock = show_low_stock_alert | default: section.settings.show_giftwrap_stock_message | default: true
+  assign show_low_stock = true
+  if show_low_stock_alert == false
+    assign show_low_stock = false
+  endif
   assign show_stock_alert = false
   if show_low_stock and inv_qty >= 1 and inv_qty < 10
     assign show_stock_alert = true
@@ -33,7 +43,7 @@
 -%}
 
 {%- if enable_giftwrap -%}
-  <div class="giftwrap-add-on" data-giftwrap-addon>
+  <div class="giftwrap-add-on" data-giftwrap-addon data-giftwrap-to-key="{{ 'giftwrap.to_property' | t }}" data-giftwrap-from-key="{{ 'giftwrap.from_property' | t }}" data-giftwrap-message-key="{{ 'giftwrap.message_property' | t }}">
     {%- comment -%} Row: checkbox + label + optional "Only 3 left!" (no chevron) {%- endcomment -%}
     <div class="giftwrap-add-on__row">
       <label class="giftwrap-add-on__label" for="giftwrap-checkbox-{{ section.id }}">

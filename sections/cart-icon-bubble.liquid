@@ -6,10 +6,24 @@
 
 <span class="visually-hidden">{{ 'templates.cart.cart' | t }}</span>
 {%- if cart != empty -%}
-  <div class="cart-count-bubble">
-    {%- if cart.item_count < 100 -%}
-      <span aria-hidden="true">{{ cart.item_count }}</span>
+  {%- liquid
+    assign gw_product = all_products[settings.gift_wrap_product_handle]
+    assign gift_wrap_product_id = gw_product.id | default: settings.gift_wrap_product_id | plus: 0
+    assign display_count = cart.item_count
+    if gift_wrap_product_id > 0
+      assign gift_wrap_qty = 0
+      for item in cart.items
+        if item.product_id == gift_wrap_product_id
+          assign gift_wrap_qty = gift_wrap_qty | plus: item.quantity
+        endif
+      endfor
+      assign display_count = cart.item_count | minus: gift_wrap_qty | at_least: 0
+    endif
+  -%}
+  <div class="cart-count-bubble" {% if display_count == 0 %}style="display: none"{% endif %}>
+    {%- if display_count < 100 and display_count > 0 -%}
+      <span aria-hidden="true">{{ display_count }}</span>
     {%- endif -%}
-    <span class="visually-hidden">{{ 'sections.header.cart_count' | t: count: cart.item_count }}</span>
+    <span class="visually-hidden">{{ 'sections.header.cart_count' | t: count: display_count }}</span>
   </div>
 {%- endif -%}

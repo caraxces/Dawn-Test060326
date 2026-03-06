@@ -361,6 +361,14 @@
         step_error: `{{- 'sections.quick_order_list.step_error' | t: step: '[step]' }}`,
       };
 
+      {%- assign gw_product = all_products[settings.gift_wrap_product_handle] -%}
+      {%- if gw_product != blank -%}
+        window.giftWrapVariantId = {{ gw_product.selected_or_first_available_variant.id | json }};
+        window.giftWrapProductId = {{ gw_product.id | json }};
+      {%- else -%}
+        window.giftWrapVariantId = "";
+        window.giftWrapProductId = {{ settings.gift_wrap_product_id | default: '8928211959963' | json }};
+      {%- endif -%}
       window.accessibilityStrings = {
         imageAvailable: `{{ 'products.product.media.image_available' | t: index: '[index]' }}`,
         shareSuccess: `{{ 'general.share.success_message' | t }}`,
