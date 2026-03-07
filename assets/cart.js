@@ -159,17 +159,91 @@ class CartItems extends HTMLElement {
 
     this.enableLoading(line);
 
-    const body = JSON.stringify({
-      line,
-      quantity,
-      sections: this.getSectionsToRender().map((section) => section.section),
-      sections_url: window.location.pathname,
-    });
+    // Pre-calculate gift wrap to batch the update
+    fetch(`${routes.cart_url}`, { headers: { 'Accept': 'application/json' } })
+      .then(res => res.json())
+      .then(cartData => {
+        let updates = {};
+        let modifiedItems = JSON.parse(JSON.stringify(cartData.items)); // Deep copy
 
-    fetch(`${routes.cart_change_url}`, { ...fetchConfig(), ...{ body } })
-      .then((response) => {
-        return response.text();
+        let targetItem = modifiedItems[line - 1];
+        if (targetItem) {
+          updates[targetItem.key] = quantity;
+          targetItem.quantity = quantity; // Update memory state
+        }
+
+        // Run Gift Wrap calculation on modified memory state
+        var gwVarId = window.giftWrapVariantId;
+        var gwProdIdKey = window.giftWrapProductId;
+        if (gwVarId && gwProdIdKey) {
+          var gwProdIdInt = parseInt(gwProdIdKey, 10);
+          var targetGwQty = 0;
+          var gwPropKey = window.giftWrapPropertyKey || '_Gift Wrap';
+          var gwPropVal = window.giftWrapPropertyValue || 'Yes';
+
+          var div = document.createElement('div');
+          div.innerHTML = gwPropKey;
+          var cleanPropKey = div.textContent || div.innerText || gwPropKey;
+          div.innerHTML = gwPropVal;
+          var cleanPropVal = div.textContent || div.innerText || gwPropVal;
+
+          var rawPropKeyStr = String(gwPropKey).toLowerCase().trim();
+          var rawPropValStr = String(gwPropVal).toLowerCase().trim();
+          var cleanPropKeyStr = String(cleanPropKey).toLowerCase().trim();
+          var cleanPropValStr = String(cleanPropVal).toLowerCase().trim();
+
+          modifiedItems.forEach(function (item) {
+            if (item.product_id === gwProdIdInt) return;
+            if (!item.properties) return;
+            var isGiftWrapped = false;
+
+            if (Array.isArray(item.properties)) {
+              isGiftWrapped = item.properties.some(function (p) {
+                if (!p || p.length < 2) return false;
+                var kStr = String(p[0]).toLowerCase().trim();
+                var vStr = String(p[1]).toLowerCase().trim();
+                return (kStr === rawPropKeyStr || kStr === cleanPropKeyStr) &&
+                  (vStr === rawPropValStr || vStr === cleanPropValStr || vStr === 'yes');
+              });
+            } else {
+              var keys = Object.keys(item.properties);
+              for (var i = 0; i < keys.length; i++) {
+                var kStr = String(keys[i]).toLowerCase().trim();
+                var vStr = String(item.properties[keys[i]]).toLowerCase().trim();
+                if ((kStr === rawPropKeyStr || kStr === cleanPropKeyStr) &&
+                  (vStr === rawPropValStr || vStr === cleanPropValStr || vStr === 'yes')) {
+                  isGiftWrapped = true;
+                  break;
+                }
+              }
+            }
+            if (isGiftWrapped) targetGwQty += item.quantity;
+          });
+
+          var rawGwItem = cartData.items.find(item => item.product_id === gwProdIdInt);
+          var currentGwQty = rawGwItem ? rawGwItem.quantity : 0;
+
+          if (currentGwQty !== targetGwQty) {
+            if (targetGwQty === 0 && !rawGwItem) {
+              // nothing
+            } else {
+              updates[rawGwItem ? rawGwItem.key : gwVarId] = targetGwQty;
+            }
+          }
+        }
+
+        const body = JSON.stringify({
+          updates: updates,
+          sections: this.getSectionsToRender().map((section) => section.section),
+          sections_url: window.location.pathname,
+        });
+
+        var updateUrl = (window.routes && window.routes.cart_update_url) ? window.routes.cart_update_url : '/cart/update';
+        if (!updateUrl.endsWith('.js')) updateUrl += '.js';
+
+        return fetch(updateUrl, { ...fetchConfig(), ...{ body } });
       })
+      .then((response) => response.text())
       .then((state) => {
         const parsedState = JSON.parse(state);
 
@@ -442,8 +516,21 @@ if (typeof subscribe === 'function' && typeof PUB_SUB_EVENTS !== 'undefined') {
           console.log(`[GiftWrapSync] Successfully fetched cart/change. Applying UI update...`);
           if (!state.sections) return;
           var drawer = document.querySelector('cart-drawer');
-          if (drawer && drawer.renderContents) {
-            drawer.renderContents(state);
+          if (drawer) {
+            var isEmpty = state.item_count === 0;
+            drawer.classList.toggle('is-empty', isEmpty);
+
+            var cartDrawerItems = document.querySelector('cart-drawer-items');
+            if (cartDrawerItems) cartDrawerItems.classList.toggle('is-empty', isEmpty);
+
+            var cartFooter = document.getElementById('main-cart-footer');
+            if (cartFooter) cartFooter.classList.toggle('is-empty', isEmpty);
+
+            if (drawer.renderContents) {
+              drawer.renderContents(state);
+            } else {
+              publish(PUB_SUB_EVENTS.cartUpdate, { source: 'giftwrap-sync', cartData: state });
+            }
           } else {
             publish(PUB_SUB_EVENTS.cartUpdate, { source: 'giftwrap-sync', cartData: state });
           }
