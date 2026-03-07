@@ -436,20 +436,18 @@
                             </div>
                           </quantity-popover>
                         </td>
-                      </tr>
-                      {%- if item_has_gift -%}
-                        <tr class="cart-item__gift-row" role="row">
+
+                        {%- if item_has_gift -%}
                           <td
                             class="cart-item__gift-cell"
                             headers="CartDrawer-ColumnProductImage CartDrawer-ColumnQuantity"
-                            colspan="4"
                             role="cell">
                             {%- render 'cart-giftwrap-line'
                               , cart_item: item
                               , gift_wrap_display_price: gift_wrap_display_price -%}
                           </td>
-                        </tr>
-                      {%- endif -%}
+                        {%- endif -%}
+                      </tr>
                     {%- endfor -%}
                   </tbody>
                 </table>

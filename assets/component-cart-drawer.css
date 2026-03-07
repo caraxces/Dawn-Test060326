@@ -315,19 +315,13 @@ cart-drawer-items {
   margin-bottom: 1.5rem;
 }
 
-/* Gift wrap row: full-width cell below item (Figma) */
-
-.cart-drawer .cart-item__gift-row {
-  display: block;
-}
-
+/* Gift wrap row: full-width cell INSIDE cart-item grid (Figma) */
 .cart-drawer .cart-item__gift-cell {
-  display: block;
+  grid-column: 1 / 5;
   width: 100%;
   min-width: 100%;
   padding: 0 0 1rem;
   border: none;
-  vertical-align: top;
   box-sizing: border-box;
 }
 
