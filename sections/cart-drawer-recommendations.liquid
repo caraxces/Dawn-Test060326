@@ -1,0 +1,101 @@
+{%- assign has_recommendations = false -%}
+{%- if recommendations.performed and recommendations.products_count > 0 -%}
+  {%- assign has_recommendations = true -%}
+  {%- assign upsell_products = recommendations.products -%}
+{%- endif -%}
+
+{%- if has_recommendations == false -%}
+  {%- assign fallback_collection = settings.cart_upsell_collection | default: settings.cart_drawer_collection -%}
+  {%- if fallback_collection != blank and fallback_collection.products_count > 0 -%}
+    {%- assign upsell_products = fallback_collection.products | limit: 10 -%}
+    {%- assign has_recommendations = true -%}
+  {%- else -%}
+    {%- assign upsell_products = collections['all'].products | limit: 10 -%}
+    {%- if upsell_products.size > 0 -%}
+      {%- assign has_recommendations = true -%}
+    {%- endif -%}
+  {%- endif -%}
+{%- endif -%}
+
+<cart-drawer-recommendations class="cart-drawer-upsell" data-cart-drawer-upsell>
+  {%- if has_recommendations -%}
+    <div class="cart-drawer-upsell__header">
+      <h3 class="cart-drawer-upsell__title">{{ 'sections.cart.you_may_also_like' | t }}</h3>
+      <div class="cart-drawer-upsell__nav">
+        <button
+          type="button"
+          class="cart-drawer-upsell__nav-btn cart-drawer-upsell__nav-btn--prev"
+          data-upsell-prev
+          aria-label="{{ 'general.previous' | t }}">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="7"
+            height="13"
+            viewBox="0 0 7 13"
+            fill="none"><path d="M6.54043 0.353577L0.707092 6.18691L6.54043 12.0202" stroke="#1E1E1E" /></svg>
+        </button>
+        <button
+          type="button"
+          class="cart-drawer-upsell__nav-btn cart-drawer-upsell__nav-btn--next"
+          data-upsell-next
+          aria-label="{{ 'general.next' | t }}">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="7"
+            height="13"
+            viewBox="0 0 7 13"
+            fill="none"><path d="M0.353556 0.353577L6.18689 6.18691L0.353556 12.0202" stroke="#1E1E1E" /></svg>
+        </button>
+      </div>
+    </div>
+    <div class="cart-drawer-upsell__track-wrap">
+      <div class="cart-drawer-upsell__track" data-upsell-track>
+        {%- for product in upsell_products -%}
+          {%- assign variant = product.selected_or_first_available_variant -%}
+          {%- if variant.available -%}
+            <div class="cart-drawer-upsell__item">
+              <a href="{{ product.url }}" class="cart-drawer-upsell__image-link">
+                {%- if product.featured_media -%}
+                  <img
+                    src="{{ product.featured_media | image_url: width: 120 }}"
+                    alt="{{ product.featured_media.alt | escape }}"
+                    width="60"
+                    height="60"
+                    loading="lazy"
+                    class="cart-drawer-upsell__image">
+                {%- else -%}
+                  {{ 'product-apparel-2' | placeholder_svg_tag: 'cart-drawer-upsell__image cart-drawer-upsell__image--placeholder' }}
+                {%- endif -%}
+              </a>
+              <div class="cart-drawer-upsell__info">
+                <a href="{{ product.url }}" class="cart-drawer-upsell__name">{{ product.title | escape }}</a>
+                <span class="cart-drawer-upsell__price price">{{ variant.price | money }}</span>
+              </div>
+              <form
+                class="cart-drawer-upsell__form"
+                action="{{ routes.cart_add_url }}"
+                method="post"
+                data-upsell-add-form>
+                <input
+                  type="hidden"
+                  name="id"
+                  value="{{ variant.id }}">
+                <input
+                  type="hidden"
+                  name="quantity"
+                  value="1">
+                <button
+                  type="submit"
+                  class="cart-drawer-upsell__add button button--primary"
+                  {% if variant.available == false %}
+                  disabled{% endif %}>
+                  {{ 'sections.cart.add' | t }} +
+                </button>
+              </form>
+            </div>
+          {%- endif -%}
+        {%- endfor -%}
+      </div>
+    </div>
+  {%- endif -%}
+</cart-drawer-recommendations>

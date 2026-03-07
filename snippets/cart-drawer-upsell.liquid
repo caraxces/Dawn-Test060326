@@ -1,61 +1,10 @@
 {% comment %}
   Cart drawer upsell - "You may also like" block
-  Uses settings.cart_drawer_collection for products.
-  Layout: title, carousel with product cards (image, name, price, Add button)
+  Uses Shopify Product Recommendations API based on the first item in the cart.
 {% endcomment %}
 
-{%- assign upsell_collection = settings.cart_upsell_collection | default: settings.cart_drawer_collection -%}
-{%- if upsell_collection != blank and cart != empty -%}
-  {%- assign upsell_products = upsell_collection.products | limit: 10 -%}
-  {%- if upsell_products.size > 0 -%}
-    <div class="cart-drawer-upsell" data-cart-drawer-upsell>
-      <div class="cart-drawer-upsell__header">
-        <h3 class="cart-drawer-upsell__title">{{ 'sections.cart.you_may_also_like' | t }}</h3>
-        <div class="cart-drawer-upsell__nav">
-          <button type="button" class="cart-drawer-upsell__nav-btn cart-drawer-upsell__nav-btn--prev" data-upsell-prev aria-label="{{ 'general.previous' | t }}">
-            <span class="icon icon-caret">{{ 'icon-caret.svg' | inline_asset_content }}</span>
-          </button>
-          <button type="button" class="cart-drawer-upsell__nav-btn cart-drawer-upsell__nav-btn--next" data-upsell-next aria-label="{{ 'general.next' | t }}">
-            <span class="icon icon-caret">{{ 'icon-caret.svg' | inline_asset_content }}</span>
-          </button>
-        </div>
-      </div>
-      <div class="cart-drawer-upsell__track-wrap">
-        <div class="cart-drawer-upsell__track" data-upsell-track>
-          {%- for product in upsell_products -%}
-            {%- assign variant = product.selected_or_first_available_variant -%}
-            {%- if variant.available -%}
-              <div class="cart-drawer-upsell__item">
-                <a href="{{ product.url }}" class="cart-drawer-upsell__image-link">
-                  {%- if product.featured_media -%}
-                    <img
-                      src="{{ product.featured_media | image_url: width: 120 }}"
-                      alt="{{ product.featured_media.alt | escape }}"
-                      width="60"
-                      height="60"
-                      loading="lazy"
-                      class="cart-drawer-upsell__image"
-                    >
-                  {%- else -%}
-                    {{ 'product-apparel-2' | placeholder_svg_tag: 'cart-drawer-upsell__image cart-drawer-upsell__image--placeholder' }}
-                  {%- endif -%}
-                </a>
-                <div class="cart-drawer-upsell__info">
-                  <a href="{{ product.url }}" class="cart-drawer-upsell__name">{{ product.title | escape }}</a>
-                  <span class="cart-drawer-upsell__price price">{{ variant.price | money }}</span>
-                </div>
-                <form class="cart-drawer-upsell__form" action="{{ routes.cart_add_url }}" method="post" data-upsell-add-form>
-                  <input type="hidden" name="id" value="{{ variant.id }}">
-                  <input type="hidden" name="quantity" value="1">
-                  <button type="submit" class="cart-drawer-upsell__add button button--primary" {% if variant.available == false %}disabled{% endif %}>
-                    {{ 'sections.cart.add' | t }} +
-                  </button>
-                </form>
-              </div>
-            {%- endif -%}
-          {%- endfor -%}
-        </div>
-      </div>
-    </div>
-  {%- endif -%}
+{%- if cart != empty and cart.items.first.product_id -%}
+  <cart-drawer-recommendations class="cart-drawer-upsell" data-cart-drawer-upsell data-url="{{ routes.product_recommendations_url }}?section_id=cart-drawer-recommendations&product_id={{ cart.items.first.product_id }}&limit=4&intent=related">
+    {%- comment -%} Content will be injected here via AJAX by CartDrawerRecommendations component {%- endcomment -%}
+  </cart-drawer-recommendations>
 {%- endif -%}
